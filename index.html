@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Baralho Metacognitivo</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+:root { --fontSize: 18px; }
+
+body {
+  margin:0;
+  font-family: Arial;
+  font-size: var(--fontSize);
+  background:#1e3c72;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.container { width:100%; max-width:420px; text-align:center; }
+
+.card {
+  width:80%;
+  margin:auto;
+  padding:30px;
+  border-radius:20px;
+  min-height:160px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+button {
+    width: 80%;
+    padding: 15px;
+    margin: 10px auto;
+    display: block;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    color: #1e3c72;
+}
+
+.planejamento { background:#4A90E2; }
+.monitoramento { background:#F5A623; }
+.avaliacao { background:#7ED321; }
+.reflexao { background:#8E44AD; }
+
+.progress {
+  width:80%;
+  height:6px;
+  background:#ccc;
+  margin:10px auto;
+  border-radius:5px;
+}
+
+.bar { height:100%; width:0%; background:white; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div id="app"></div>
+</div>
+
+<script>
+
+// ---------------- ESTADO ----------------
+
+let estado = "inicio";
+
+let tempoTotal = parseInt(localStorage.getItem("tempo")) || (5 * 60000);
+let vozAtiva = localStorage.getItem("voz") === "true";
+
+let tempoAtual = 0;
+let intervalo;
+
+let score = { monitoramento:"", avaliacao:"" };
+
+// 🔴 NOVO CONTROLE IMPORTANTE
+let podeIniciarTimer = false;
+
+// ---------------- VOZ ----------------
+
+function falar(txt){
+  if(!vozAtiva) return;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(new SpeechSynthesisUtterance(txt));
+}
+
+// ---------------- RENDER ----------------
+
+function render(){
+
+if(estado==="inicio"){
+  app.innerHTML = `
+    <h2>⚙️ Configuração</h2>
+
+    <button onclick="toggleVoz()">
+      🔊 Leitura: ${vozAtiva ? "Ativada" : "Desativada"}
+    </button>
+
+    <p>Fonte</p>
+    <input type="range" min="14" max="28"
+      value="${localStorage.getItem('fonte')||18}"
+      onchange="setFonte(this.value)">
+
+    <p>Tempo: <span id="tempoLabel">${tempoTotal/60000} min</span></p>
+    <input type="range" min="1" max="20"
+      value="${tempoTotal/60000}"
+      onchange="setTempo(this.value)">
+
+    <button class="planejamento" onclick="irPlanejamento()">Iniciar</button>
+  `;
+  falar("Metacogni. Tela de configuração");
+}
+
+else if(["planejamento","monitoramento","avaliacao"].includes(estado)){
+  telaCard();
+}
+
+else if(estado==="reflexao"){
+  let p = gerarPergunta();
+
+  app.innerHTML=`
+    <h2>🧠 Reflexão</h2>
+    <div class="card reflexao">${p}</div>
+    <button onclick="irScore()">Continuar</button>
+  `;
+
+  falar(p);
+}
+
+else if(estado==="score"){
+  app.innerHTML=`
+    <h2>🏆 Resultado</h2>
+    <p>Monitoramento: ${score.monitoramento}</p>
+    <p>Avaliação: ${score.avaliacao}</p>
+    <button onclick="reiniciar()">Novo ciclo</button>
+  `;
+}
+
+}
+
+// ---------------- CONFIG ----------------
+
+function toggleVoz(){
+  vozAtiva = !vozAtiva;
+  localStorage.setItem("voz", vozAtiva);
+  render();
+}
+
+function setFonte(v){
+  document.documentElement.style.setProperty('--fontSize', v+"px");
+  localStorage.setItem("fonte", v);
+}
+
+function setTempo(v){
+  tempoTotal = v * 60000;
+  localStorage.setItem("tempo", tempoTotal);
+  document.getElementById("tempoLabel").innerText = v+" min";
+}
+
+// ---------------- FLUXO ----------------
+
+function irPlanejamento(){
+  estado="planejamento";
+  render();
+}
+
+// ---------------- CARD ----------------
+
+function telaCard(){
+
+  let cor = estado;
+  let cardFalar = "Escolha uma carta de Planejamento.";
+  let cardTitulo = "Planejamento";
+  
+  if (estado==="monitoramento"){
+    cardFalar = "Escolha uma carta de Monitoramento.";
+    cardTitulo = "Monitoramento";
+  }
+    
+  if (estado==="avaliacao") {
+    cardFalar = "Escolha uma carta de Avaliação.";
+    cardTitulo = "Avaliação";
+  }
+
+  // 🔴 LIBERA clique do card
+  podeIniciarTimer = true;
+
+  app.innerHTML=`
+    <h2>${cardTitulo.toUpperCase()}</h2>
+
+    <div class="progress">
+      <div class="bar" id="barra"></div>
+    </div>
+
+    <div class="card ${cor}" onclick="iniciarCard()">
+      <p id="msg">Clique após a leitura da carta</p>
+    </div>
+
+    <button onclick="scanQR()">📷 Ler QR</button>
+
+    ${estado==="monitoramento" ? `
+      <button onclick="responder('ok')">✔ Satisfatório</button>
+      <button onclick="responder('parcial')">⚠️ Parcial</button>
+      <button onclick="responder('ruim')">❌ Insatisfatório</button>
+    `:""}
+
+    ${estado==="avaliacao" ? `
+      <button onclick="avaliar('sim')">✔ Atingiu</button>
+      <button onclick="avaliar('nao')">❌ Não</button>
+    `:""}
+
+    <button onclick="proximo()">➡️ Próximo</button>
+  `;
+
+  falar(cardFalar);
+}
+
+// ---------------- CARD START ----------------
+
+function iniciarCard(){
+
+  if(!podeIniciarTimer) return;
+
+  document.getElementById("msg").innerText="Estudar...";
+  iniciarTimer();
+
+  podeIniciarTimer = false;
+}
+
+// ---------------- TIMER ----------------
+
+function iniciarTimer(){
+
+  tempoAtual=0;
+  clearInterval(intervalo);
+
+  intervalo=setInterval(()=>{
+
+    tempoAtual+=100;
+
+    let p=(tempoAtual/tempoTotal)*100;
+    document.getElementById("barra").style.width=p+"%";
+
+    if(tempoAtual>=tempoTotal){
+      clearInterval(intervalo);
+    }
+
+  },100);
+}
+
+// ---------------- RESPOSTAS ----------------
+
+function responder(resp){
+  score.monitoramento = resp;
+  iniciarTimer();
+}
+
+// ---------------- AVALIAÇÃO ----------------
+
+function avaliar(resp){
+  score.avaliacao = resp;
+}
+
+// ---------------- PRÓXIMO ----------------
+
+function proximo(){
+
+  clearInterval(intervalo);
+
+  tempoAtual = 0;
+  if(document.getElementById("barra")){
+    document.getElementById("barra").style.width = "0%";
+  }
+
+  podeIniciarTimer = true;
+
+  if(estado==="planejamento") estado="monitoramento";
+  else if(estado==="monitoramento") estado="avaliacao";
+  else if(estado==="avaliacao") estado="reflexao";
+
+  render();
+}
+
+// ---------------- REFLEXÃO ----------------
+
+function gerarPergunta(){
+  return score.avaliacao==="sim"
+    ? "Sua compreensão é profunda?"
+    : "O que você precisa melhorar?";
+}
+
+// ---------------- FINAL ----------------
+
+function irScore(){
+  estado="score";
+  render();
+}
+
+function reiniciar(){
+  estado="inicio";
+  score={monitoramento:"",avaliacao:""};
+  render();
+}
+
+// ---------------- QR ----------------
+
+function scanQR(){
+  const scanner=new Html5QrcodeScanner("reader",{fps:10,qrbox:250});
+  scanner.render(txt=>{
+    document.getElementById("msg").innerText=txt;
+    falar(txt);
+    scanner.clear();
+  });
+}
+
+// ---------------- START ----------------
+
+render();
+
+</script>
+
+</body>
+</html>
