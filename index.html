@@ -113,6 +113,15 @@ input:checked + .slider:before {
 .bar { height:100%; width:0%; background:white; }
 
 #reader { width:300px; margin:10px auto; }
+
+           
+            
+              
+                       
+               
+                     
+                  
+ 
 </style>
 </head>
 
@@ -137,12 +146,17 @@ input:checked + .slider:before {
 // ---------------- ESTADO ----------------
 
 let estado = "inicio";
+                                                                  
+                                                  
 
 let tempoTotal = parseInt(localStorage.getItem("tempo")) || (5 * 60000);
 let vozAtiva = localStorage.getItem("voz") === "true";
 
 let tempoAtual = 0;
 let intervalo;
+                                          
+                           
+                   
 
 let score = { monitoramento:"", avaliacao:"" };
 let podeIniciarTimer = false;
@@ -163,47 +177,72 @@ function falar(txt){
 
 function gerarFeedbackCompleto(){
 
+  // ✔ + ✔ 🧠
   if(score.monitoramento==="ok" && score.avaliacao==="sim"){
     return {
-      titulo: "🧠 Calibração adequada",
+      titulo: "Alta acurácia metacognitiva (precisão do julgamento)",
       interpretacao: "Seu julgamento sobre o estudo foi coerente com o resultado.",
-      significado: "Você demonstrou alta acurácia metacognitiva, ou seja, sabe avaliar bem sua própria aprendizagem.",
+      significado: "Você demonstrou alta acurácia metacognitiva, avaliando corretamente sua própria aprendizagem.",
       direcionamento: "Continue utilizando essa estratégia. Tente agora aprofundar o nível de compreensão do conteúdo."
     };
   }
 
+  // ✔ + ❌ ⚠️
   if(score.monitoramento==="ok" && score.avaliacao==="nao"){
     return {
-      titulo: "⚠️ Superestimação do desempenho",
+      titulo: "Baixa acurácia metacognitiva (superestimação)",
       interpretacao: "Você acreditou que havia compreendido, mas o objetivo não foi atingido.",
-      significado: "Há um viés otimista, indicando dificuldade em perceber limites da própria compreensão.",
+      significado: "Há um viés otimista, indicando dificuldade em perceber os limites da própria compreensão.",
       direcionamento: "Reveja o conteúdo com mais atenção e busque evidências concretas de aprendizagem."
     };
   }
 
+  // ⚠️ + ✔ 🧠
+  if(score.monitoramento==="parcial" && score.avaliacao==="sim"){
+    return {
+      titulo: "Acurácia metacognitiva moderada (precisão parcial)",
+      interpretacao: "Você teve dúvidas durante o estudo, mas conseguiu atingir o objetivo.",
+      significado: "Você apresenta acurácia metacognitiva em desenvolvimento, reconhecendo parcialmente seu desempenho.",
+      direcionamento: "Continue praticando. Tente identificar com mais precisão quando realmente compreende o conteúdo."
+    };
+  }
+
+  // ⚠️ + ❌ 🧠
+  if(score.monitoramento==="parcial" && score.avaliacao==="nao"){
+    return {
+      titulo: "Acurácia metacognitiva moderada (baixa precisão)",
+      interpretacao: "Você percebeu parcialmente as dificuldades, e o objetivo não foi atingido.",
+      significado: "Há indícios de monitoramento metacognitivo, mas ainda com baixa precisão na avaliação.",
+      direcionamento: "Aprofunde sua análise durante o estudo. Tente identificar exatamente onde está a dificuldade."
+    };
+  }
+
+  // ❌ + ✔ ⚠️
   if(score.monitoramento==="ruim" && score.avaliacao==="sim"){
     return {
-      titulo: "⚠️ Subestimação do desempenho",
+      titulo: "Baixa acurácia metacognitiva (subestimação)",
       interpretacao: "Você acreditou que não havia compreendido, mas conseguiu atingir o objetivo.",
       significado: "Há um viés pessimista, indicando insegurança sobre a própria aprendizagem.",
-      direcionamento: "Confie mais no seu processo. Tente reconhecer melhor os sinais de aprendizagem."
+      direcionamento: "Confie mais no seu processo. Procure reconhecer os sinais de que você está aprendendo."
     };
   }
 
+  // ❌ + ❌ 🔍
   if(score.monitoramento==="ruim" && score.avaliacao==="nao"){
     return {
-      titulo: "🔍 Calibração adequada negativa",
+      titulo: "Consciência da dificuldade (acurácia metacognitiva adequada)",
       interpretacao: "Você identificou corretamente que não atingiu o objetivo.",
-      significado: "Você demonstrou consciência da dificuldade, essencial para melhorar.",
-      direcionamento: "Ajuste sua estratégia de estudo antes de tentar novamente."
+      significado: "Você demonstrou consciência da dificuldade, que é essencial para o desenvolvimento metacognitivo.",
+      direcionamento: "Ajuste sua estratégia de estudo (tempo, método ou foco) antes de tentar novamente."
     };
   }
 
+  // fallback 🧠
   return {
-    titulo: "🧠 Reflexão geral",
-    interpretacao: "Continue refletindo sobre seu processo.",
-    significado: "",
-    direcionamento: ""
+    titulo: "Reflexão geral",
+    interpretacao: "Continue refletindo sobre seu processo de aprendizagem.",
+    significado: "A metacognição envolve observar, avaliar e ajustar sua forma de aprender.",
+    direcionamento: "Retorne ao conteúdo e tente aplicar uma estratégia diferente."
   };
 }
 
@@ -250,6 +289,8 @@ else if(estado==="reflexao"){
   app.innerHTML=`
     <h2>🧠 Reflexão</h2>
     <div class="card reflexao">${p}</div>
+
+                                                     
     <button onclick="irScore()">Continuar</button>
   `;
 
@@ -257,8 +298,10 @@ else if(estado==="reflexao"){
 }
 
 else if(estado==="score"){
+                                           
 
   let f = gerarFeedbackCompleto();
+             
 
   app.innerHTML=`
     <h2>${f.titulo}</h2>
@@ -268,11 +311,12 @@ else if(estado==="score"){
     <p><strong>🎯 Significado metacognitivo:</strong><br>${f.significado}</p>
 
     <p><strong>🔁 Direcionamento:</strong><br>${f.direcionamento}</p>
+                         
 
     <button onclick="reiniciar()">Novo ciclo</button>
   `;
 
-  falar(f.titulo + ". " + f.interpretacao);
+  falar(f.titulo + ". Interpretação:" + ". " + f.interpretacao + ". Significado metacognitivo:" + ". " + f.significado + ". Direcionamento:" + ". " + f.direcionamento);
 }
 
 }
@@ -300,6 +344,8 @@ function irPlanejamento(){
   render();
 }
 
+                                                                      
+         
 function telaCard(){
 
   podeIniciarTimer = true;
@@ -335,6 +381,8 @@ function telaCard(){
   falar("Escolha uma carta");
 }
 
+
+                                            
 function iniciarCard(){
   if(!podeIniciarTimer) return;
   document.getElementById("msg").innerText="Estudar...";
@@ -357,6 +405,8 @@ function iniciarTimer(){
   },100);
 }
 
+           
+ 
 function responder(resp){
   score.monitoramento=resp;
   iniciarTimer();
@@ -367,6 +417,7 @@ function avaliar(resp){
 }
 
 function proximo(){
+ 
   clearInterval(intervalo);
   tempoAtual=0;
   let barra=document.getElementById("barra");
@@ -391,10 +442,41 @@ function irScore(){
   render();
 }
 
+                                                       
+                                      
+                                                      
+      
+   
+
+          
+                                                 
+                                                                  
+                                              
+                                                      
+    
+ 
+
+                                       
+
+                  
+
+                                     
+
+           
+                                 
+                          
+          
+                                                   
+                 
+                
+     
+    
 function reiniciar(){
   estado="inicio";
   score={monitoramento:"",avaliacao:""};
   render();
+                     
+                  
 }
 
 // ---------------- QR ----------------
@@ -418,6 +500,8 @@ function scanQR(){
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js');
+                                                                     
+                                                                     
 }
 
 // ---------------- START ----------------
@@ -428,3 +512,4 @@ render();
 
 </body>
 </html>
+                                                                     
