@@ -40,14 +40,14 @@ body {
 }
 
 button {
-    width: 80%;
-    padding: 15px;
-    margin: 10px auto;
-    display: block;
-    border: none;
-    border-radius: 10px;
-    font-weight: bold;
-    color: #1e3c72;
+  width: 80%;
+  padding: 15px;
+  margin: 10px auto;
+  display: block;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  color: #1e3c72;
 }
 
 .planejamento { background:#4A90E2; }
@@ -64,6 +64,11 @@ button {
 }
 
 .bar { height:100%; width:0%; background:white; }
+
+#reader {
+  width: 300px;
+  margin: 10px auto;
+}
 </style>
 </head>
 
@@ -210,6 +215,8 @@ function telaCard(){
 
     <button onclick="scanQR()">📷 Ler QR</button>
 
+    <div id="reader"></div>
+
     ${estado==="monitoramento" ? `
       <button onclick="responder('ok')">✔ Satisfatório</button>
       <button onclick="responder('parcial')">⚠️ Parcial</button>
@@ -314,14 +321,41 @@ function reiniciar(){
   render();
 }
 
-// ---------------- QR ----------------
+// ---------------- QR CODE (CORRIGIDO) ----------------
 
 function scanQR(){
-  const scanner=new Html5QrcodeScanner("reader",{fps:10,qrbox:250});
-  scanner.render(txt=>{
-    document.getElementById("msg").innerText=txt;
-    falar(txt);
-    scanner.clear();
+
+  const html5QrCode = new Html5Qrcode("reader");
+
+  Html5Qrcode.getCameras().then(devices => {
+
+    if (devices && devices.length) {
+
+      const cameraId = devices.find(d =>
+        d.label.toLowerCase().includes("back")
+      )?.id || devices[0].id;
+
+      html5QrCode.start(
+        cameraId,
+        {
+          fps: 10,
+          qrbox: 250
+        },
+        (decodedText) => {
+
+          document.getElementById("msg").innerText = decodedText;
+          falar(decodedText);
+
+          html5QrCode.stop();
+
+        },
+        (errorMessage) => {}
+      );
+
+    }
+
+  }).catch(err => {
+    alert("Erro ao acessar câmera: " + err);
   });
 }
 
@@ -329,9 +363,7 @@ function scanQR(){
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js')
-      .then(reg => console.log("Service Worker registrado:", reg.scope))
-      .catch(err => console.log("Erro no Service Worker:", err));
+    navigator.serviceWorker.register('service-worker.js');
   });
 }
 
