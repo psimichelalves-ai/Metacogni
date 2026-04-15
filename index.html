@@ -50,7 +50,6 @@ button {
   color:#1e3c72;
 }
 
-/* SWITCH */
 .switch-container {
   width:80%;
   margin:15px auto;
@@ -68,9 +67,7 @@ button {
   height: 26px;
 }
 
-.switch input {
-  opacity: 0;
-}
+.switch input { opacity: 0; }
 
 .slider {
   position:absolute;
@@ -125,7 +122,7 @@ input:checked + .slider:before {
   <div id="app"></div>
 </div>
 
-<!-- VLibras padrão -->
+<!-- VLibras -->
 <div vw class="enabled">
   <div vw-access-button class="active"></div>
   <div vw-plugin-wrapper>
@@ -144,9 +141,6 @@ let estado = "inicio";
 let tempoTotal = parseInt(localStorage.getItem("tempo")) || (5 * 60000);
 let vozAtiva = localStorage.getItem("voz") === "true";
 
-let cameraSelecionada = localStorage.getItem("camera") || "";
-let camerasDisponiveis = [];
-
 let tempoAtual = 0;
 let intervalo;
 
@@ -163,26 +157,6 @@ function falar(txt){
   if(!vozAtiva) return;
   speechSynthesis.cancel();
   speechSynthesis.speak(new SpeechSynthesisUtterance(txt));
-}
-
-// ---------------- CAMERAS ----------------
-
-async function carregarCameras(){
-  try{
-    camerasDisponiveis = await Html5Qrcode.getCameras();
-
-    if(!cameraSelecionada && camerasDisponiveis.length){
-      cameraSelecionada = camerasDisponiveis[0].id;
-      localStorage.setItem("camera", cameraSelecionada);
-    }
-  }catch(e){
-    console.log("Erro câmera", e);
-  }
-}
-
-function selecionarCamera(id){
-  cameraSelecionada = id;
-  localStorage.setItem("camera", id);
 }
 
 // ---------------- RENDER ----------------
@@ -252,8 +226,6 @@ function toggleVoz(valor){
   localStorage.setItem("voz", vozAtiva);
 }
 
-// ---------------- AJUSTES ----------------
-
 function setFonte(v){
   document.documentElement.style.setProperty('--fontSize', v+"px");
   localStorage.setItem("fonte", v);
@@ -289,14 +261,6 @@ function telaCard(){
       <p id="msg">Clique após leitura da carta</p>
     </div>
 
-    <select onchange="selecionarCamera(this.value)" style="width:80%; padding:10px; border-radius:10px;">
-      ${camerasDisponiveis.map(cam => `
-        <option value="${cam.id}" ${cam.id===cameraSelecionada ? "selected":""}>
-          ${cam.label || "Câmera"}
-        </option>
-      `).join("")}
-    </select>
-
     <button onclick="scanQR()">📷 Ler QR</button>
     <div id="reader"></div>
 
@@ -317,7 +281,7 @@ function telaCard(){
   falar("Escolha uma carta");
 }
 
-// ---------------- RESTANTE DO FLUXO ----------------
+// ---------------- TIMER ----------------
 
 function iniciarCard(){
   if(!podeIniciarTimer) return;
@@ -340,6 +304,8 @@ function iniciarTimer(){
     }
   },100);
 }
+
+// ---------------- AÇÕES ----------------
 
 function responder(resp){
   score.monitoramento=resp;
@@ -364,11 +330,15 @@ function proximo(){
   render();
 }
 
+// ---------------- REFLEXÃO ----------------
+
 function gerarPergunta(){
   return score.avaliacao==="sim"
     ? "Sua compreensão é profunda?"
     : "O que você precisa melhorar?";
 }
+
+// ---------------- FINAL ----------------
 
 function irScore(){
   estado="score";
@@ -381,26 +351,41 @@ function reiniciar(){
   render();
 }
 
-// ---------------- QR ----------------
+// ---------------- QR COM CÂMERA TRASEIRA ----------------
 
 function scanQR(){
 
-  if(!cameraSelecionada){
-    alert("Selecione uma câmera");
-    return;
-  }
-
   const html5QrCode = new Html5Qrcode("reader");
 
+  // tenta traseira primeiro
   html5QrCode.start(
-    cameraSelecionada,
+    { facingMode: "environment" },
     { fps:10, qrbox:250 },
     (decodedText)=>{
       document.getElementById("msg").innerText=decodedText;
       falar(decodedText);
       html5QrCode.stop();
     }
-  );
+  ).catch(err => {
+
+    console.log("Falha traseira, tentando padrão...");
+
+    // fallback automático
+    Html5Qrcode.getCameras().then(devices => {
+      if(devices.length){
+        html5QrCode.start(
+          devices[0].id,
+          { fps:10, qrbox:250 },
+          (decodedText)=>{
+            document.getElementById("msg").innerText=decodedText;
+            falar(decodedText);
+            html5QrCode.stop();
+          }
+        );
+      }
+    });
+
+  });
 }
 
 // ---------------- SERVICE WORKER ----------------
@@ -411,7 +396,7 @@ if ('serviceWorker' in navigator) {
 
 // ---------------- START ----------------
 
-carregarCameras().then(()=> render());
+render();
 
 </script>
 
