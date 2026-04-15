@@ -27,6 +27,7 @@ body {
 
 .container { width:100%; max-width:420px; text-align:center; }
 
+/* CARD */
 .card {
   width:80%;
   margin:auto;
@@ -39,17 +40,72 @@ body {
   cursor:pointer;
 }
 
+/* BOTÕES */
 button {
-  width: 80%;
-  padding: 15px;
-  margin: 10px auto;
-  display: block;
-  border: none;
-  border-radius: 10px;
-  font-weight: bold;
-  color: #1e3c72;
+  width:80%;
+  padding:15px;
+  margin:10px auto;
+  display:block;
+  border:none;
+  border-radius:10px;
+  font-weight:bold;
+  color:#1e3c72;
 }
 
+/* SWITCH */
+.switch-container {
+  width:80%;
+  margin:15px auto;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#ffffff22;
+  padding:12px;
+  border-radius:12px;
+}
+
+.switch {
+  position: relative;
+  width: 50px;
+  height: 26px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top:0; left:0; right:0; bottom:0;
+  background:#ccc;
+  border-radius:34px;
+  transition:.4s;
+}
+
+.slider:before {
+  position:absolute;
+  content:"";
+  height:18px;
+  width:18px;
+  left:4px;
+  bottom:4px;
+  background:white;
+  border-radius:50%;
+  transition:.4s;
+}
+
+input:checked + .slider {
+  background:#00c853;
+}
+
+input:checked + .slider:before {
+  transform:translateX(24px);
+}
+
+/* CORES */
 .planejamento { background:#4A90E2; }
 .monitoramento { background:#F5A623; }
 .avaliacao { background:#7ED321; }
@@ -65,9 +121,12 @@ button {
 
 .bar { height:100%; width:0%; background:white; }
 
-#reader {
-  width: 300px;
-  margin: 10px auto;
+#reader { width:300px; margin:10px auto; }
+
+/* VLibras invisível */
+#vlibras-texto {
+  position:absolute;
+  opacity:0;
 }
 </style>
 </head>
@@ -78,6 +137,16 @@ button {
   <div id="app"></div>
 </div>
 
+<!-- VLibras -->
+<div vw class="enabled">
+  <div vw-access-button class="active"></div>
+  <div vw-plugin-wrapper>
+    <div class="vw-plugin-top-wrapper"></div>
+  </div>
+</div>
+
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+
 <script>
 
 // ---------------- ESTADO ----------------
@@ -85,7 +154,8 @@ button {
 let estado = "inicio";
 
 let tempoTotal = parseInt(localStorage.getItem("tempo")) || (5 * 60000);
-let vozAtiva = localStorage.getItem("voz") === "true";
+let vozAtiva = localStorage.getItem("voz") === "false";
+let librasAtivo = localStorage.getItem("libras") === "false";
 
 let tempoAtual = 0;
 let intervalo;
@@ -94,12 +164,26 @@ let score = { monitoramento:"", avaliacao:"" };
 
 let podeIniciarTimer = false;
 
-// ---------------- VOZ ----------------
+// ---------------- VLibras INIT ----------------
+
+new window.VLibras.Widget('https://vlibras.gov.br/app');
+
+// ---------------- ACESSIBILIDADE ----------------
 
 function falar(txt){
-  if(!vozAtiva) return;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(new SpeechSynthesisUtterance(txt));
+
+  // VOZ
+  if(vozAtiva){
+    speechSynthesis.cancel();
+    speechSynthesis.speak(new SpeechSynthesisUtterance(txt));
+    return;
+  }
+
+  // LIBRAS
+  if(librasAtivo){
+    let el = document.getElementById("vlibras-texto");
+    el.innerText = txt;
+  }
 }
 
 // ---------------- RENDER ----------------
@@ -108,11 +192,28 @@ function render(){
 
 if(estado==="inicio"){
   app.innerHTML = `
-    <h2>⚙️ Configuração1</h2>
+    <h2>⚙️ Configuração</h2>
 
-    <button onclick="toggleVoz()">
-      🔊 Leitura: ${vozAtiva ? "Ativada" : "Desativada"}
-    </button>
+    <div class="switch-container">
+      <span>🔊 Leitura em Voz</span>
+      <label class="switch">
+        <input type="checkbox" ${vozAtiva ? "checked":""}
+          onchange="toggleVoz(this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="switch-container">
+      <span>🤟 Tradutor de Libras</span>
+      <label class="switch">
+        <input type="checkbox" ${librasAtivo ? "checked":""}
+          onchange="toggleLibras(this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    ${vozAtiva ? "<p>🔊 Modo Voz Ativo</p>" : ""}
+    ${librasAtivo ? "<p>🤟 Modo Libras Ativo</p>" : ""}
 
     <p>Fonte</p>
     <input type="range" min="14" max="28"
@@ -126,7 +227,8 @@ if(estado==="inicio"){
 
     <button class="planejamento" onclick="irPlanejamento()">Iniciar</button>
   `;
-  falar("Metacogni. Tela de configuração");
+
+  falar("Tela de configuração");
 }
 
 else if(["planejamento","monitoramento","avaliacao"].includes(estado)){
@@ -156,13 +258,33 @@ else if(estado==="score"){
 
 }
 
-// ---------------- CONFIG ----------------
+// ---------------- SWITCHES ----------------
 
-function toggleVoz(){
-  vozAtiva = !vozAtiva;
+function toggleVoz(valor){
+  vozAtiva = valor;
+
+  if(valor){
+    librasAtivo = false;
+    localStorage.setItem("libras", false);
+  }
+
   localStorage.setItem("voz", vozAtiva);
   render();
 }
+
+function toggleLibras(valor){
+  librasAtivo = valor;
+
+  if(valor){
+    vozAtiva = false;
+    localStorage.setItem("voz", false);
+  }
+
+  localStorage.setItem("libras", librasAtivo);
+  render();
+}
+
+// ---------------- CONFIG ----------------
 
 function setFonte(v){
   document.documentElement.style.setProperty('--fontSize', v+"px");
@@ -186,35 +308,20 @@ function irPlanejamento(){
 
 function telaCard(){
 
-  let cor = estado;
-  let cardFalar = "Escolha uma carta de Planejamento.";
-  let cardTitulo = "Planejamento";
-  
-  if (estado==="monitoramento"){
-    cardFalar = "Escolha uma carta de Monitoramento.";
-    cardTitulo = "Monitoramento";
-  }
-    
-  if (estado==="avaliacao") {
-    cardFalar = "Escolha uma carta de Avaliação.";
-    cardTitulo = "Avaliação";
-  }
-
   podeIniciarTimer = true;
 
   app.innerHTML=`
-    <h2>${cardTitulo.toUpperCase()}</h2>
+    <h2>${estado.toUpperCase()}</h2>
 
     <div class="progress">
       <div class="bar" id="barra"></div>
     </div>
 
-    <div class="card ${cor}" onclick="iniciarCard()">
-      <p id="msg">Clique após a leitura da carta</p>
+    <div class="card ${estado}" onclick="iniciarCard()">
+      <p id="msg">Clique após leitura da carta</p>
     </div>
 
     <button onclick="scanQR()">📷 Ler QR</button>
-
     <div id="reader"></div>
 
     ${estado==="monitoramento" ? `
@@ -231,67 +338,50 @@ function telaCard(){
     <button onclick="proximo()">➡️ Próximo</button>
   `;
 
-  falar(cardFalar);
-}
-
-// ---------------- CARD START ----------------
-
-function iniciarCard(){
-
-  if(!podeIniciarTimer) return;
-
-  document.getElementById("msg").innerText="Estudar...";
-  iniciarTimer();
-
-  podeIniciarTimer = false;
+  falar("Escolha uma carta");
 }
 
 // ---------------- TIMER ----------------
 
-function iniciarTimer(){
+function iniciarCard(){
+  if(!podeIniciarTimer) return;
+  document.getElementById("msg").innerText="Estudar...";
+  iniciarTimer();
+  podeIniciarTimer=false;
+}
 
+function iniciarTimer(){
   tempoAtual=0;
   clearInterval(intervalo);
 
   intervalo=setInterval(()=>{
-
     tempoAtual+=100;
-
     let p=(tempoAtual/tempoTotal)*100;
     document.getElementById("barra").style.width=p+"%";
 
     if(tempoAtual>=tempoTotal){
       clearInterval(intervalo);
     }
-
   },100);
 }
 
-// ---------------- RESPOSTAS ----------------
+// ---------------- AÇÕES ----------------
 
 function responder(resp){
-  score.monitoramento = resp;
+  score.monitoramento=resp;
   iniciarTimer();
 }
 
-// ---------------- AVALIAÇÃO ----------------
-
 function avaliar(resp){
-  score.avaliacao = resp;
+  score.avaliacao=resp;
 }
 
-// ---------------- PRÓXIMO ----------------
-
 function proximo(){
-
   clearInterval(intervalo);
-
-  tempoAtual = 0;
-
-  let barra = document.getElementById("barra");
-  if(barra) barra.style.width = "0%";
-
-  podeIniciarTimer = true;
+  tempoAtual=0;
+  let barra=document.getElementById("barra");
+  if(barra) barra.style.width="0%";
+  podeIniciarTimer=true;
 
   if(estado==="planejamento") estado="monitoramento";
   else if(estado==="monitoramento") estado="avaliacao";
@@ -321,7 +411,7 @@ function reiniciar(){
   render();
 }
 
-// ---------------- QR CODE (CORRIGIDO) ----------------
+// ---------------- QR ----------------
 
 function scanQR(){
 
@@ -329,42 +419,29 @@ function scanQR(){
 
   Html5Qrcode.getCameras().then(devices => {
 
-    if (devices && devices.length) {
+    if (devices.length) {
 
-      const cameraId = devices.find(d =>
-        d.label.toLowerCase().includes("back")
-      )?.id || devices[0].id;
+      const cameraId = devices[0].id;
 
-      html5QrCode.start(
-        cameraId,
-        {
-          fps: 10,
-          qrbox: 250
-        },
-        (decodedText) => {
-
-          document.getElementById("msg").innerText = decodedText;
+      html5QrCode.start(cameraId,
+        { fps:10, qrbox:250 },
+        (decodedText)=>{
+          document.getElementById("msg").innerText=decodedText;
           falar(decodedText);
-
           html5QrCode.stop();
-
-        },
-        (errorMessage) => {}
+        }
       );
-
     }
 
-  }).catch(err => {
-    alert("Erro ao acessar câmera: " + err);
+  }).catch(err=>{
+    alert("Erro câmera: "+err);
   });
 }
 
 // ---------------- SERVICE WORKER ----------------
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js');
-  });
+  navigator.serviceWorker.register('service-worker.js');
 }
 
 // ---------------- START ----------------
