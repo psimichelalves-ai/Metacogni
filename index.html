@@ -180,7 +180,7 @@ function gerarFeedbackCompleto(){
   // ✔ + ✔ 🧠
   if(score.monitoramento==="ok" && score.avaliacao==="sim"){
     return {
-      titulo: "Alta acurácia metacognitiva (precisão do julgamento)",
+      titulo: "Alta acurácia metacognitiva" +". "+ "(precisão do julgamento)",
       interpretacao: "Seu julgamento sobre o estudo foi coerente com o resultado.",
       significado: "Você demonstrou alta acurácia metacognitiva, avaliando corretamente sua própria aprendizagem.",
       direcionamento: "Continue utilizando essa estratégia. Tente agora aprofundar o nível de compreensão do conteúdo."
@@ -190,7 +190,7 @@ function gerarFeedbackCompleto(){
   // ✔ + ❌ ⚠️
   if(score.monitoramento==="ok" && score.avaliacao==="nao"){
     return {
-      titulo: "Baixa acurácia metacognitiva (superestimação)",
+      titulo: "Baixa acurácia metacognitiva" +". "+ "(superestimação)",
       interpretacao: "Você acreditou que havia compreendido, mas o objetivo não foi atingido.",
       significado: "Há um viés otimista, indicando dificuldade em perceber os limites da própria compreensão.",
       direcionamento: "Reveja o conteúdo com mais atenção e busque evidências concretas de aprendizagem."
@@ -200,7 +200,7 @@ function gerarFeedbackCompleto(){
   // ⚠️ + ✔ 🧠
   if(score.monitoramento==="parcial" && score.avaliacao==="sim"){
     return {
-      titulo: "Acurácia metacognitiva moderada (precisão parcial)",
+      titulo: "Acurácia metacognitiva moderada" +". "+ "(precisão parcial)",
       interpretacao: "Você teve dúvidas durante o estudo, mas conseguiu atingir o objetivo.",
       significado: "Você apresenta acurácia metacognitiva em desenvolvimento, reconhecendo parcialmente seu desempenho.",
       direcionamento: "Continue praticando. Tente identificar com mais precisão quando realmente compreende o conteúdo."
@@ -210,7 +210,7 @@ function gerarFeedbackCompleto(){
   // ⚠️ + ❌ 🧠
   if(score.monitoramento==="parcial" && score.avaliacao==="nao"){
     return {
-      titulo: "Acurácia metacognitiva moderada (baixa precisão)",
+      titulo: "Acurácia metacognitiva moderada" +". "+ "(baixa precisão)",
       interpretacao: "Você percebeu parcialmente as dificuldades, e o objetivo não foi atingido.",
       significado: "Há indícios de monitoramento metacognitivo, mas ainda com baixa precisão na avaliação.",
       direcionamento: "Aprofunde sua análise durante o estudo. Tente identificar exatamente onde está a dificuldade."
@@ -220,7 +220,7 @@ function gerarFeedbackCompleto(){
   // ❌ + ✔ ⚠️
   if(score.monitoramento==="ruim" && score.avaliacao==="sim"){
     return {
-      titulo: "Baixa acurácia metacognitiva (subestimação)",
+      titulo: "Baixa acurácia metacognitiva" +". "+ "(subestimação)",
       interpretacao: "Você acreditou que não havia compreendido, mas conseguiu atingir o objetivo.",
       significado: "Há um viés pessimista, indicando insegurança sobre a própria aprendizagem.",
       direcionamento: "Confie mais no seu processo. Procure reconhecer os sinais de que você está aprendendo."
@@ -230,7 +230,7 @@ function gerarFeedbackCompleto(){
   // ❌ + ❌ 🔍
   if(score.monitoramento==="ruim" && score.avaliacao==="nao"){
     return {
-      titulo: "Consciência da dificuldade (acurácia metacognitiva adequada)",
+      titulo: "Consciência da dificuldade" +". "+ "(acurácia metacognitiva adequada)",
       interpretacao: "Você identificou corretamente que não atingiu o objetivo.",
       significado: "Você demonstrou consciência da dificuldade, que é essencial para o desenvolvimento metacognitivo.",
       direcionamento: "Ajuste sua estratégia de estudo (tempo, método ou foco) antes de tentar novamente."
@@ -365,24 +365,28 @@ function telaCard(){
     <div id="reader"></div>
 
     ${estado==="monitoramento" ? `
-      <button onclick="responder('ok')">✔ Satisfatório</button>
-      <button onclick="responder('parcial')">⚠️ Parcial</button>
-      <button onclick="responder('ruim')">❌ Insatisfatório</button>
+      <button onclick="responder('ok'); proximo();">✔ Satisfatório</button>
+      <button onclick="responder('parcial'); proximo();">⚠️ Parcial</button>
+      <button onclick="responder('ruim'); proximo();">❌ Insatisfatório</button>
     `:""}
 
     ${estado==="avaliacao" ? `
-      <button onclick="avaliar('sim')">✔ Atingiu</button>
-      <button onclick="avaliar('nao')">❌ Não</button>
+      <button onclick="avaliar('sim'); proximo();">✔ Atingiu</button>
+      <button onclick="avaliar('nao'); proximo();">❌ Não</button>
+    `:""}
+    
+    ${estado==="planejamento" ? `
+      <button onclick="proximo()">➡️ Próximo</button>
     `:""}
 
-    <button onclick="proximo()">➡️ Próximo</button>
+    
   `;
 
   falar("Escolha uma carta");
 }
 
-
-                                            
+                        
+                 
 function iniciarCard(){
   if(!podeIniciarTimer) return;
   document.getElementById("msg").innerText="Estudar...";
@@ -405,8 +409,8 @@ function iniciarTimer(){
   },100);
 }
 
-           
- 
+                                
+                                     
 function responder(resp){
   score.monitoramento=resp;
   iniciarTimer();
@@ -417,7 +421,7 @@ function avaliar(resp){
 }
 
 function proximo(){
- 
+                                                            
   clearInterval(intervalo);
   tempoAtual=0;
   let barra=document.getElementById("barra");
@@ -442,10 +446,6 @@ function irScore(){
   render();
 }
 
-                                                       
-                                      
-                                                      
-      
    
 
           
@@ -471,12 +471,16 @@ function irScore(){
                 
      
     
+ 
+
+                                          
+
 function reiniciar(){
   estado="inicio";
   score={monitoramento:"",avaliacao:""};
   render();
-                     
-                  
+ 
+
 }
 
 // ---------------- QR ----------------
