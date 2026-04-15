@@ -7,6 +7,7 @@
 <title>Baralho Metacognitivo</title>
 
 <link rel="manifest" href="manifest.json">
+
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
@@ -29,13 +30,13 @@ body {
 .card {
   width:80%;
   margin:auto;
-  padding:25px;
+  padding:30px;
   border-radius:20px;
   min-height:160px;
   display:flex;
   align-items:center;
   justify-content:center;
-  text-align:left;
+  cursor:pointer;
 }
 
 button {
@@ -60,8 +61,13 @@ button {
   border-radius:12px;
 }
 
-.switch { position:relative; width:50px; height:26px; }
-.switch input { opacity:0; }
+.switch {
+  position: relative;
+  width: 50px;
+  height: 26px;
+}
+
+.switch input { opacity: 0; }
 
 .slider {
   position:absolute;
@@ -82,9 +88,15 @@ button {
   transition:.3s;
 }
 
-input:checked + .slider { background:#00c853; }
-input:checked + .slider:before { transform:translateX(24px); }
+input:checked + .slider {
+  background:#00c853;
+}
 
+input:checked + .slider:before {
+  transform:translateX(24px);
+}
+
+/* CORES */
 .planejamento { background:#4A90E2; }
 .monitoramento { background:#F5A623; }
 .avaliacao { background:#7ED321; }
@@ -101,15 +113,6 @@ input:checked + .slider:before { transform:translateX(24px); }
 .bar { height:100%; width:0%; background:white; }
 
 #reader { width:300px; margin:10px auto; }
-
-.feedback {
-  width:90%;
-  margin:auto;
-  background:#ffffff22;
-  padding:20px;
-  border-radius:15px;
-  text-align:left;
-}
 </style>
 </head>
 
@@ -119,19 +122,34 @@ input:checked + .slider:before { transform:translateX(24px); }
   <div id="app"></div>
 </div>
 
+<!-- VLibras -->
+<div vw class="enabled">
+  <div vw-access-button class="active"></div>
+  <div vw-plugin-wrapper>
+    <div class="vw-plugin-top-wrapper"></div>
+  </div>
+</div>
+
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+
 <script>
 
 // ---------------- ESTADO ----------------
 
-let estado="inicio";
-let tempoTotal=parseInt(localStorage.getItem("tempo"))||(5*60000);
-let vozAtiva=localStorage.getItem("voz")==="true";
+let estado = "inicio";
 
-let tempoAtual=0;
+let tempoTotal = parseInt(localStorage.getItem("tempo")) || (5 * 60000);
+let vozAtiva = localStorage.getItem("voz") === "true";
+
+let tempoAtual = 0;
 let intervalo;
-let score={monitoramento:"",avaliacao:""};
-let podeIniciarTimer=false;
-let nfcReader=null;
+
+let score = { monitoramento:"", avaliacao:"" };
+let podeIniciarTimer = false;
+
+// ---------------- VLibras ----------------
+
+new window.VLibras.Widget('https://vlibras.gov.br/app');
 
 // ---------------- VOZ ----------------
 
@@ -141,25 +159,52 @@ function falar(txt){
   speechSynthesis.speak(new SpeechSynthesisUtterance(txt));
 }
 
-// ---------------- NFC ----------------
+// ---------------- FEEDBACK METACOGNITIVO ----------------
 
-async function iniciarNFC(){
-  if(!('NDEFReader' in window)) return;
+function gerarFeedbackCompleto(){
 
-  try{
-    nfcReader=new NDEFReader();
-    await nfcReader.scan();
-
-    nfcReader.onreading = event=>{
-      let texto="";
-      for(const record of event.message.records){
-        texto+=new TextDecoder().decode(record.data);
-      }
-      document.getElementById("msg").innerText=texto;
-      falar(texto);
+  if(score.monitoramento==="ok" && score.avaliacao==="sim"){
+    return {
+      titulo: "🧠 Calibração adequada",
+      interpretacao: "Seu julgamento sobre o estudo foi coerente com o resultado.",
+      significado: "Você demonstrou alta acurácia metacognitiva, ou seja, sabe avaliar bem sua própria aprendizagem.",
+      direcionamento: "Continue utilizando essa estratégia. Tente agora aprofundar o nível de compreensão do conteúdo."
     };
+  }
 
-  }catch(e){}
+  if(score.monitoramento==="ok" && score.avaliacao==="nao"){
+    return {
+      titulo: "⚠️ Superestimação do desempenho",
+      interpretacao: "Você acreditou que havia compreendido, mas o objetivo não foi atingido.",
+      significado: "Há um viés otimista, indicando dificuldade em perceber limites da própria compreensão.",
+      direcionamento: "Reveja o conteúdo com mais atenção e busque evidências concretas de aprendizagem."
+    };
+  }
+
+  if(score.monitoramento==="ruim" && score.avaliacao==="sim"){
+    return {
+      titulo: "⚠️ Subestimação do desempenho",
+      interpretacao: "Você acreditou que não havia compreendido, mas conseguiu atingir o objetivo.",
+      significado: "Há um viés pessimista, indicando insegurança sobre a própria aprendizagem.",
+      direcionamento: "Confie mais no seu processo. Tente reconhecer melhor os sinais de aprendizagem."
+    };
+  }
+
+  if(score.monitoramento==="ruim" && score.avaliacao==="nao"){
+    return {
+      titulo: "🔍 Calibração adequada negativa",
+      interpretacao: "Você identificou corretamente que não atingiu o objetivo.",
+      significado: "Você demonstrou consciência da dificuldade, essencial para melhorar.",
+      direcionamento: "Ajuste sua estratégia de estudo antes de tentar novamente."
+    };
+  }
+
+  return {
+    titulo: "🧠 Reflexão geral",
+    interpretacao: "Continue refletindo sobre seu processo.",
+    significado: "",
+    direcionamento: ""
+  };
 }
 
 // ---------------- RENDER ----------------
@@ -167,25 +212,32 @@ async function iniciarNFC(){
 function render(){
 
 if(estado==="inicio"){
-  app.innerHTML=`
+  app.innerHTML = `
     <h2>⚙️ Configuração</h2>
 
     <div class="switch-container">
       <span>🔊 Leitura em Voz</span>
       <label class="switch">
-        <input type="checkbox" ${vozAtiva?"checked":""}
-        onchange="toggleVoz(this.checked)">
+        <input type="checkbox" ${vozAtiva ? "checked":""}
+          onchange="toggleVoz(this.checked)">
         <span class="slider"></span>
       </label>
     </div>
 
-    <p>Tempo: ${tempoTotal/60000} min</p>
+    <p>Fonte</p>
+    <input type="range" min="14" max="28"
+      value="${localStorage.getItem('fonte')||18}"
+      onchange="setFonte(this.value)">
+
+    <p>Tempo: <span id="tempoLabel">${tempoTotal/60000} min</span></p>
     <input type="range" min="1" max="20"
       value="${tempoTotal/60000}"
       onchange="setTempo(this.value)">
 
     <button class="planejamento" onclick="irPlanejamento()">Iniciar</button>
   `;
+
+  falar("Tela de configuração");
 }
 
 else if(["planejamento","monitoramento","avaliacao"].includes(estado)){
@@ -193,63 +245,64 @@ else if(["planejamento","monitoramento","avaliacao"].includes(estado)){
 }
 
 else if(estado==="reflexao"){
+  let p = gerarPergunta();
+
   app.innerHTML=`
     <h2>🧠 Reflexão</h2>
-    <div class="card reflexao">
-      Pense sobre seu desempenho antes de ver o resultado.
-    </div>
-    <button onclick="mostrarFeedback()">Ver análise</button>
+    <div class="card reflexao">${p}</div>
+    <button onclick="irScore()">Continuar</button>
   `;
+
+  falar(p);
 }
 
-else if(estado==="feedback"){
-  let f=gerarFeedback();
+else if(estado==="score"){
+
+  let f = gerarFeedbackCompleto();
 
   app.innerHTML=`
-    <h2>📊 Resultado Metacognitivo</h2>
+    <h2>${f.titulo}</h2>
 
-    <div class="feedback">
-      <h3>${f.titulo}</h3>
+    <p><strong>📊 Interpretação:</strong><br>${f.interpretacao}</p>
 
-      <p><b>📊 Interpretação:</b><br>${f.interpretacao}</p>
+    <p><strong>🎯 Significado metacognitivo:</strong><br>${f.significado}</p>
 
-      <p><b>🎯 Significado:</b><br>${f.significado}</p>
-
-      <p><b>🔁 Direcionamento:</b><br>${f.direcionamento}</p>
-    </div>
+    <p><strong>🔁 Direcionamento:</strong><br>${f.direcionamento}</p>
 
     <button onclick="reiniciar()">Novo ciclo</button>
   `;
 
-  falar(f.titulo);
+  falar(f.titulo + ". " + f.interpretacao);
 }
 
 }
 
-// ---------------- CONFIG ----------------
+// ---------------- RESTANTE DO FLUXO ----------------
 
-function toggleVoz(v){
-  vozAtiva=v;
-  localStorage.setItem("voz",v);
+function toggleVoz(valor){
+  vozAtiva = valor;
+  localStorage.setItem("voz", vozAtiva);
+}
+
+function setFonte(v){
+  document.documentElement.style.setProperty('--fontSize', v+"px");
+  localStorage.setItem("fonte", v);
 }
 
 function setTempo(v){
-  tempoTotal=v*60000;
-  localStorage.setItem("tempo",tempoTotal);
+  tempoTotal = v * 60000;
+  localStorage.setItem("tempo", tempoTotal);
+  document.getElementById("tempoLabel").innerText = v+" min";
 }
-
-// ---------------- FLUXO ----------------
 
 function irPlanejamento(){
   estado="planejamento";
   render();
 }
 
-// ---------------- CARD ----------------
-
 function telaCard(){
 
-  podeIniciarTimer=true;
+  podeIniciarTimer = true;
 
   app.innerHTML=`
     <h2>${estado.toUpperCase()}</h2>
@@ -259,18 +312,19 @@ function telaCard(){
     </div>
 
     <div class="card ${estado}" onclick="iniciarCard()">
-      <p id="msg">Aproxime NFC ou leia QR</p>
+      <p id="msg">Clique após leitura da carta</p>
     </div>
 
-    <button onclick="scanQR()">📷 QR Code</button>
+    <button onclick="scanQR()">📷 Ler QR</button>
     <div id="reader"></div>
 
-    ${estado==="monitoramento"?`
+    ${estado==="monitoramento" ? `
       <button onclick="responder('ok')">✔ Satisfatório</button>
+      <button onclick="responder('parcial')">⚠️ Parcial</button>
       <button onclick="responder('ruim')">❌ Insatisfatório</button>
     `:""}
 
-    ${estado==="avaliacao"?`
+    ${estado==="avaliacao" ? `
       <button onclick="avaliar('sim')">✔ Atingiu</button>
       <button onclick="avaliar('nao')">❌ Não</button>
     `:""}
@@ -278,13 +332,12 @@ function telaCard(){
     <button onclick="proximo()">➡️ Próximo</button>
   `;
 
-  setTimeout(iniciarNFC,500);
+  falar("Escolha uma carta");
 }
-
-// ---------------- TIMER ----------------
 
 function iniciarCard(){
   if(!podeIniciarTimer) return;
+  document.getElementById("msg").innerText="Estudar...";
   iniciarTimer();
   podeIniciarTimer=false;
 }
@@ -304,23 +357,21 @@ function iniciarTimer(){
   },100);
 }
 
-// ---------------- AÇÕES ----------------
-
-function responder(r){
-  score.monitoramento=r;
+function responder(resp){
+  score.monitoramento=resp;
+  iniciarTimer();
 }
 
-function avaliar(r){
-  score.avaliacao=r;
+function avaliar(resp){
+  score.avaliacao=resp;
 }
 
 function proximo(){
-
   clearInterval(intervalo);
-
-  if(nfcReader){
-    try{ nfcReader.onreading=null }catch(e){}
-  }
+  tempoAtual=0;
+  let barra=document.getElementById("barra");
+  if(barra) barra.style.width="0%";
+  podeIniciarTimer=true;
 
   if(estado==="planejamento") estado="monitoramento";
   else if(estado==="monitoramento") estado="avaliacao";
@@ -329,73 +380,44 @@ function proximo(){
   render();
 }
 
-// ---------------- FEEDBACK ----------------
+function gerarPergunta(){
+  return score.avaliacao==="sim"
+    ? "Sua compreensão é profunda?"
+    : "O que você precisa melhorar?";
+}
 
-function mostrarFeedback(){
-  estado="feedback";
+function irScore(){
+  estado="score";
   render();
 }
 
-function gerarFeedback(){
-
-  if(score.monitoramento==="ok" && score.avaliacao==="sim"){
-    return {
-      titulo:"🧠 Calibração adequada",
-      interpretacao:"Seu julgamento foi coerente com o resultado.",
-      significado:"Alta acurácia metacognitiva.",
-      direcionamento:"Aprofunde seu conhecimento."
-    };
-  }
-
-  if(score.monitoramento==="ok" && score.avaliacao==="nao"){
-    return {
-      titulo:"🧠 Superestimação do desempenho",
-      interpretacao:"Você achou que sabia, mas não atingiu o objetivo.",
-      significado:"Viés otimista.",
-      direcionamento:"Reveja o conteúdo com mais profundidade."
-    };
-  }
-
-  if(score.monitoramento==="ruim" && score.avaliacao==="sim"){
-    return {
-      titulo:"🧠 Subestimação do desempenho",
-      interpretacao:"Você sabia mais do que pensava.",
-      significado:"Viés pessimista.",
-      direcionamento:"Confie mais no seu aprendizado."
-    };
-  }
-
-  return {
-    titulo:"🧠 Calibração adequada negativa",
-    interpretacao:"Você identificou corretamente a dificuldade.",
-    significado:"Consciência metacognitiva.",
-    direcionamento:"Ajuste sua estratégia de estudo."
-  };
+function reiniciar(){
+  estado="inicio";
+  score={monitoramento:"",avaliacao:""};
+  render();
 }
 
 // ---------------- QR ----------------
 
 function scanQR(){
 
-  const qr=new Html5Qrcode("reader");
+  const html5QrCode = new Html5Qrcode("reader");
 
-  qr.start(
-    { facingMode:"environment" },
+  html5QrCode.start(
+    { facingMode: "environment" },
     { fps:10, qrbox:250 },
-    txt=>{
-      document.getElementById("msg").innerText=txt;
-      falar(txt);
-      qr.stop();
+    (decodedText)=>{
+      document.getElementById("msg").innerText=decodedText;
+      falar(decodedText);
+      html5QrCode.stop();
     }
   );
 }
 
-// ---------------- RESET ----------------
+// ---------------- SERVICE WORKER ----------------
 
-function reiniciar(){
-  estado="inicio";
-  score={monitoramento:"",avaliacao:""};
-  render();
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js');
 }
 
 // ---------------- START ----------------
