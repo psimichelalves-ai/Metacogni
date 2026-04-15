@@ -1,10 +1,12 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Baralho Metacognitivo</title>
+
+<link rel="manifest" href="manifest.json">
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -85,7 +87,6 @@ let intervalo;
 
 let score = { monitoramento:"", avaliacao:"" };
 
-// 🔴 NOVO CONTROLE IMPORTANTE
 let podeIniciarTimer = false;
 
 // ---------------- VOZ ----------------
@@ -194,7 +195,6 @@ function telaCard(){
     cardTitulo = "Avaliação";
   }
 
-  // 🔴 LIBERA clique do card
   podeIniciarTimer = true;
 
   app.innerHTML=`
@@ -280,9 +280,9 @@ function proximo(){
   clearInterval(intervalo);
 
   tempoAtual = 0;
-  if(document.getElementById("barra")){
-    document.getElementById("barra").style.width = "0%";
-  }
+
+  let barra = document.getElementById("barra");
+  if(barra) barra.style.width = "0%";
 
   podeIniciarTimer = true;
 
@@ -322,6 +322,16 @@ function scanQR(){
     document.getElementById("msg").innerText=txt;
     falar(txt);
     scanner.clear();
+  });
+}
+
+// ---------------- SERVICE WORKER ----------------
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => console.log("Service Worker registrado:", reg.scope))
+      .catch(err => console.log("Erro no Service Worker:", err));
   });
 }
 
