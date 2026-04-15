@@ -1,13 +1,64 @@
-const CACHE = "metacogni";
+const CACHE_NAME = "metacog-v2";
 
-self.addEventListener("install", e => {
-  e.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(["./"]))
+// arquivos essenciais do app
+const FILES_TO_CACHE = [
+  "./",
+  "./index.html",
+  "https://unpkg.com/html5-qrcode"
+];
+
+// ---------------- INSTALL ----------------
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(FILES_TO_CACHE);
+    })
   );
+  self.skipWaiting();
 });
 
-self.addEventListener("fetch", e => {
-  e.respondWith(
-    caches.match(e.request).then(res => res || fetch(e.request))
+// ---------------- ACTIVATE ----------------
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    })
   );
+  self.clients.claim();
+});
+
+// ---------------- FETCH ----------------
+self.addEventListener("fetch", (event) => {
+
+  // estratégia: cache first
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+
+      if (response) {
+        return response;
+      }
+
+      return fetch(event.request)
+        .then((networkResponse) => {
+
+          // salva no cache
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+          });
+
+        })
+        .catch(() => {
+          // fallback simples offline
+          return caches.match("./index.html");
+        });
+    })
+  );
+
 });
