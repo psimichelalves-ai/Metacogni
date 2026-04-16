@@ -98,9 +98,11 @@ input:checked + .slider:before {
 
 /* CORES */
 .planejamento { background:#4A90E2; }
+.estude { background:#8E44AD; }
 .monitoramento { background:#F5A623; }
 .avaliacao { background:#7ED321; }
 .reflexao { background:#8E44AD; }
+
 
 .progress {
   width:80%;
@@ -113,15 +115,6 @@ input:checked + .slider:before {
 .bar { height:100%; width:0%; background:white; }
 
 #reader { width:300px; margin:10px auto; }
-
-           
-            
-              
-                       
-               
-                     
-                  
- 
 </style>
 </head>
 
@@ -146,17 +139,12 @@ input:checked + .slider:before {
 // ---------------- ESTADO ----------------
 
 let estado = "inicio";
-                                                                  
-                                                  
 
 let tempoTotal = parseInt(localStorage.getItem("tempo")) || (5 * 60000);
 let vozAtiva = localStorage.getItem("voz") === "true";
 
 let tempoAtual = 0;
 let intervalo;
-                                          
-                           
-                   
 
 let score = { monitoramento:"", avaliacao:"" };
 let podeIniciarTimer = false;
@@ -181,9 +169,9 @@ function gerarFeedbackCompleto(){
   if(score.monitoramento==="ok" && score.avaliacao==="sim"){
     return {
       titulo: "Alta acurácia metacognitiva" +". "+ "(precisão do julgamento)",
-      interpretacao: ". " + "Seu julgamento sobre o estudo foi coerente com o resultado.",
-      significado: ". " + "Você demonstrou alta acurácia metacognitiva, avaliando corretamente sua própria aprendizagem.",
-      direcionamento: ". " + "Continue utilizando essa estratégia. Tente agora aprofundar o nível de compreensão do conteúdo."
+      interpretacao: "Seu julgamento sobre o estudo foi coerente com o resultado.",
+      significado: "Você demonstrou alta acurácia metacognitiva, avaliando corretamente sua própria aprendizagem.",
+      direcionamento: "Continue utilizando essa estratégia. Tente agora aprofundar o nível de compreensão do conteúdo."
     };
   }
 
@@ -191,19 +179,19 @@ function gerarFeedbackCompleto(){
   if(score.monitoramento==="ok" && score.avaliacao==="nao"){
     return {
       titulo: "Baixa acurácia metacognitiva" +". "+ "(superestimação)",
-      interpretacao: ". " + "Você acreditou que havia compreendido, mas o objetivo não foi atingido.",
-      significado: ". " + "Há um viés otimista, indicando dificuldade em perceber os limites da própria compreensão.",
-      direcionamento: ". " + "Reveja o conteúdo com mais atenção e busque evidências concretas de aprendizagem."
+      interpretacao: "Você acreditou que havia compreendido, mas o objetivo não foi atingido.",
+      significado: "Há um viés otimista, indicando dificuldade em perceber os limites da própria compreensão.",
+      direcionamento: "Reveja o conteúdo com mais atenção e busque evidências concretas de aprendizagem."
     };
   }
 
   // ⚠️ + ✔ 🧠
   if(score.monitoramento==="parcial" && score.avaliacao==="sim"){
     return {
-      titulo: ". " + "Acurácia metacognitiva moderada" +". "+ "(precisão parcial)",
+      titulo: "Acurácia metacognitiva moderada" +". "+ "(precisão parcial)",
       interpretacao: "Você teve dúvidas durante o estudo, mas conseguiu atingir o objetivo.",
-      significado: ". " + "Você apresenta acurácia metacognitiva em desenvolvimento, reconhecendo parcialmente seu desempenho.",
-      direcionamento: ". " + "Continue praticando. Tente identificar com mais precisão quando realmente compreende o conteúdo."
+      significado: "Você apresenta acurácia metacognitiva em desenvolvimento, reconhecendo parcialmente seu desempenho.",
+      direcionamento: "Continue praticando. Tente identificar com mais precisão quando realmente compreende o conteúdo."
     };
   }
 
@@ -211,9 +199,9 @@ function gerarFeedbackCompleto(){
   if(score.monitoramento==="parcial" && score.avaliacao==="nao"){
     return {
       titulo: "Acurácia metacognitiva moderada" +". "+ "(baixa precisão)",
-      interpretacao: ". " + "Você percebeu parcialmente as dificuldades, e o objetivo não foi atingido.",
-      significado: ". " + "Há indícios de monitoramento metacognitivo, mas ainda com baixa precisão na avaliação.",
-      direcionamento: ". " + "Aprofunde sua análise durante o estudo. Tente identificar exatamente onde está a dificuldade."
+      interpretacao: "Você percebeu parcialmente as dificuldades, e o objetivo não foi atingido.",
+      significado: "Há indícios de monitoramento metacognitivo, mas ainda com baixa precisão na avaliação.",
+      direcionamento: "Aprofunde sua análise durante o estudo. Tente identificar exatamente onde está a dificuldade."
     };
   }
 
@@ -221,9 +209,9 @@ function gerarFeedbackCompleto(){
   if(score.monitoramento==="ruim" && score.avaliacao==="sim"){
     return {
       titulo: "Baixa acurácia metacognitiva" +". "+ "(subestimação)",
-      interpretacao: ". " + "Você acreditou que não havia compreendido, mas conseguiu atingir o objetivo.",
-      significado: ". " + "Há um viés pessimista, indicando insegurança sobre a própria aprendizagem.",
-      direcionamento: ". " + "Confie mais no seu processo. Procure reconhecer os sinais de que você está aprendendo."
+      interpretacao: "Você acreditou que não havia compreendido, mas conseguiu atingir o objetivo.",
+      significado: "Há um viés pessimista, indicando insegurança sobre a própria aprendizagem.",
+      direcionamento: "Confie mais no seu processo. Procure reconhecer os sinais de que você está aprendendo."
     };
   }
 
@@ -231,18 +219,18 @@ function gerarFeedbackCompleto(){
   if(score.monitoramento==="ruim" && score.avaliacao==="nao"){
     return {
       titulo: "Consciência da dificuldade" +". "+ "(acurácia metacognitiva adequada)",
-      interpretacao: ". " + "Você identificou corretamente que não atingiu o objetivo.",
-      significado: ". " + "Você demonstrou consciência da dificuldade, que é essencial para o desenvolvimento metacognitivo.",
-      direcionamento: ". " + "Ajuste sua estratégia de estudo (tempo, método ou foco) antes de tentar novamente."
+      interpretacao: "Você identificou corretamente que não atingiu o objetivo.",
+      significado: "Você demonstrou consciência da dificuldade, que é essencial para o desenvolvimento metacognitivo.",
+      direcionamento: "Ajuste sua estratégia de estudo (tempo, método ou foco) antes de tentar novamente."
     };
   }
 
   // fallback 🧠
   return {
     titulo: "Reflexão geral",
-    interpretacao: ". " + "Continue refletindo sobre seu processo de aprendizagem.",
-    significado: ". " + "A metacognição envolve observar, avaliar e ajustar sua forma de aprender.",
-    direcionamento: ". " + "Retorne ao conteúdo e tente aplicar uma estratégia diferente."
+    interpretacao: "Continue refletindo sobre seu processo de aprendizagem.",
+    significado: "A metacognição envolve observar, avaliar e ajustar sua forma de aprender.",
+    direcionamento: "Retorne ao conteúdo e tente aplicar uma estratégia diferente."
   };
 }
 
@@ -252,7 +240,7 @@ function render(){
 
 if(estado==="inicio"){
   app.innerHTML = `
-    <h2>⚙️ Configuração</h2>
+    <h2>⚙️ CONFIGURAÇÃO</h2>
 
     <div class="switch-container">
       <span>🔊 Leitura em Voz</span>
@@ -269,17 +257,16 @@ if(estado==="inicio"){
       onchange="setFonte(this.value)">
 
     <p>Tempo: <span id="tempoLabel">${tempoTotal/60000} min</span></p>
-    <input type="range" min="1" max="20"
+    <input type="range" min="0.1" max="20"
       value="${tempoTotal/60000}"
       onchange="setTempo(this.value)">
 
-    <button class="planejamento" onclick="irPlanejamento()">Iniciar</button>
+    <button class="planejamento" onclick="irPlanejamento()">➡️ Iniciar</button>
   `;
 
-  falar("Tela de configuração");
-}
-
-else if(["planejamento","monitoramento","avaliacao"].includes(estado)){
+  falar("Metacogni. Tela de configuração");
+  
+} else if(["planejamento","monitoramento","avaliacao","estude"].includes(estado)){
   telaCard();
 }
 
@@ -287,33 +274,30 @@ else if(estado==="reflexao"){
   let p = gerarPergunta();
 
   app.innerHTML=`
-    <h2>🧠 Reflexão</h2>
+    <h2>🧠 REFLEXÃO</h2>
     <div class="card reflexao">${p}</div>
-
-                                                     
-    <button onclick="irScore()">Continuar</button>
+    <button onclick="irScore()">➡️ Continuar</button>
   `;
 
   falar(p);
 }
 
 else if(estado==="score"){
-                                           
 
   let f = gerarFeedbackCompleto();
-             
 
   app.innerHTML=`
-    <h2>${f.titulo}</h2>
+    
+    <h2>📊 FEEDBACK METACOGNITIVO</h2>
+    <h3>${f.titulo}</h3>
 
-    <p><strong>📊 Interpretação:</strong><br>${f.interpretacao}</p>
+    <p><strong>Interpretação:</strong><br>${f.interpretacao}</p>
 
-    <p><strong>🎯 Significado metacognitivo:</strong><br>${f.significado}</p>
+    <p><strong>Significado metacognitivo:</strong><br>${f.significado}</p>
 
-    <p><strong>🔁 Direcionamento:</strong><br>${f.direcionamento}</p>
-                         
+    <p><strong>Direcionamento:</strong><br>${f.direcionamento}</p>
 
-    <button onclick="reiniciar()">Novo ciclo</button>
+    <button onclick="reiniciar()">🔁 Novo ciclo</button>
   `;
 
   falar(f.titulo + ". Interpretação:" + ". " + f.interpretacao + ". Significado metacognitivo:" + ". " + f.significado + ". Direcionamento:" + ". " + f.direcionamento);
@@ -334,6 +318,7 @@ function setFonte(v){
 }
 
 function setTempo(v){
+  // tempoTotal = v * 60000; //Descomentar essa linha e comentar a linha baixa quando implantar xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   tempoTotal = v * 60000;
   localStorage.setItem("tempo", tempoTotal);
   document.getElementById("tempoLabel").innerText = v+" min";
@@ -344,25 +329,32 @@ function irPlanejamento(){
   render();
 }
 
-                                                                      
-         
 function telaCard(){
 
   podeIniciarTimer = true;
 
   app.innerHTML=`
-    <h2>${estado.toUpperCase()}</h2>
+    
+    ${estado==="avaliacao" ? `<h2>AVALIAÇÃO</h2>`:`<h2>${estado.toUpperCase()}</h2>`}
 
-    <div class="progress">
-      <div class="bar" id="barra"></div>
-    </div>
-
-    <div class="card ${estado}" onclick="iniciarCard()">
-      <p id="msg">Clique após leitura da carta</p>
-    </div>
-
-    <button onclick="scanQR()">📷 Ler QR</button>
-    <div id="reader"></div>
+    ${estado==="estude" ? `
+    
+    
+      <div class="progress">
+        <div class="bar" id="barra"></div>
+      </div>
+      <div class="card ${estado}">
+        <p id="msg" style="font-size: xx-large;">📚</p>
+      </div>
+    `:`
+      <div class="card ${estado}">
+        <p id="msg">Escolha uma carta...</p>
+      </div>
+      
+      <button onclick="scanQR()">📷 Ler QR</button>
+      <div id="reader"></div>
+        
+    `}    
 
     ${estado==="monitoramento" ? `
       <button onclick="responder('ok'); proximo();">✔ Satisfatório</button>
@@ -376,22 +368,15 @@ function telaCard(){
     `:""}
     
     ${estado==="planejamento" ? `
-      <button onclick="proximo()">➡️ Próximo</button>
+      <button onclick="proximo(); estudar();">➡️ Próximo</button>
     `:""}
-
     
   `;
 
-  falar("Escolha uma carta");
-}
-
-                        
-                 
-function iniciarCard(){
-  if(!podeIniciarTimer) return;
-  document.getElementById("msg").innerText="Estudar...";
-  iniciarTimer();
-  podeIniciarTimer=false;
+  if(estado==="estude")
+    falar("Estude."); 
+  else
+    falar("Escolha uma carta.");
 }
 
 function iniciarTimer(){
@@ -405,15 +390,13 @@ function iniciarTimer(){
 
     if(tempoAtual>=tempoTotal){
       clearInterval(intervalo);
+      proximo();
     }
   },100);
 }
 
-                                
-                                     
 function responder(resp){
-  score.monitoramento=resp;
-  iniciarTimer();
+  score.monitoramento=resp;  
 }
 
 function avaliar(resp){
@@ -421,24 +404,58 @@ function avaliar(resp){
 }
 
 function proximo(){
-                                                            
-  clearInterval(intervalo);
-  tempoAtual=0;
-  let barra=document.getElementById("barra");
-  if(barra) barra.style.width="0%";
-  podeIniciarTimer=true;
-
-  if(estado==="planejamento") estado="monitoramento";
+  if(estado==="planejamento") estado="estude";
+  else if(estado==="estude") estado="monitoramento";
   else if(estado==="monitoramento") estado="avaliacao";
   else if(estado==="avaliacao") estado="reflexao";
 
   render();
 }
 
+function estudar(){
+  /*clearInterval(intervalo);
+  tempoAtual=0;
+  let barra=document.getElementById("barra");
+  if(barra) barra.style.width="0%";
+  podeIniciarTimer=true;*/
+
+  iniciarTimer();
+
+  render();
+}
+
+
+
 function gerarPergunta(){
-  return score.avaliacao==="sim"
-    ? "Sua compreensão é profunda?"
-    : "O que você precisa melhorar?";
+  let perguntas = [];
+
+  if (score.monitoramento === "ok") {
+    perguntas = [
+      "Sua compreensão é profunda ou superficial?",
+      "Você consegue explicar esse conteúdo com segurança?",      
+      "Sua compreensão pode estar incompleta?"
+    ];
+  }
+
+  else if (score.monitoramento === "parcial") {
+    perguntas = [
+      "Onde sua compreensão está incompleta?",
+      "O que falta para atingir o objetivo?",
+      "Qual parte precisa de mais atenção?"
+    ];
+  }
+
+  else {
+    perguntas = [
+      "O que você faria diferente para compreender melhor?",
+      "O que precisa revisar primeiro?",
+      "O que ainda precisa aprender?"
+    ];
+  }
+
+  let pergunta = perguntas[Math.floor(Math.random() * perguntas.length)];
+
+  return pergunta;
 }
 
 function irScore(){
@@ -446,41 +463,10 @@ function irScore(){
   render();
 }
 
-   
-
-          
-                                                 
-                                                                  
-                                              
-                                                      
-    
- 
-
-                                       
-
-                  
-
-                                     
-
-           
-                                 
-                          
-          
-                                                   
-                 
-                
-     
-    
- 
-
-                                          
-
 function reiniciar(){
   estado="inicio";
   score={monitoramento:"",avaliacao:""};
   render();
- 
-
 }
 
 // ---------------- QR ----------------
@@ -504,8 +490,6 @@ function scanQR(){
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js');
-                                                                     
-                                                                     
 }
 
 // ---------------- START ----------------
@@ -516,4 +500,3 @@ render();
 
 </body>
 </html>
-                                                                     
