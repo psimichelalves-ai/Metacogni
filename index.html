@@ -303,7 +303,7 @@ function render(){
 
 if(estado==="inicio"){
   app.innerHTML = `
-    <h2>⚙️ CONFIGURAÇÃO</h2>
+    <h2>⚙️ CONFIGURAÇÃO2</h2>
 
     <div class="switch-container">
       <span>🔊 Leitura em Voz</span>
@@ -414,7 +414,7 @@ function telaCard(){
         <p id="msg">Escolha uma carta...</p>
       </div>
       
-      <button onclick="scanQR(estado)">📷 Ler QR</button>
+      <button onclick="scanQR(${estado})">📷 Ler QR</button>
       <div id="reader"></div>
         
     `}    
