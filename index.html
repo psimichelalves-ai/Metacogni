@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Baralho Metacognitivo</title>
+<title>MetaCog</title>
 
 <link rel="manifest" href="manifest.json">
 
@@ -17,8 +17,8 @@ body {
   margin:0;
   font-family: Arial;
   font-size: var(--fontSize);
-  background:#030011;
-  color:white;
+  background:#fdfdfd;
+  color:#030011;
   display:flex;
   justify-content:center;
   align-items:center;
@@ -28,11 +28,11 @@ body {
 .container { width:100%; max-width:420px; text-align:center; }
 
 .card {
-  width:80%;
+  width:70%;
   margin:auto;
   padding:30px;
   border-radius:20px;
-  min-height:160px;
+  min-height:300px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -47,7 +47,8 @@ button {
   border:none;
   border-radius:10px;
   font-weight:bold;
-  color:#1e3c72;
+  color:white;
+  background:#3287f2;
 }
 
 .switch-container {
@@ -57,7 +58,7 @@ button {
   justify-content:space-between;
   align-items:center;
   background:#ffffff22;
-  padding:12px;
+  padding:2px;
   border-radius:12px;
 }
 
@@ -103,7 +104,7 @@ input:checked + .slider:before {
 .avaliacao { background:#7ED321; }
 .reflexao { background:#8E44AD; }*/
 
-.planejamento { background:#745bff; }
+.planejamento { background:#3287f2; }
 .estude { background:#7ED321; }
 .monitoramento { background:#fa62cc; }
 .avaliacao { background:#ff7a41; }
@@ -121,7 +122,7 @@ input:checked + .slider:before {
   border-radius:5px;
 }
 
-.bar { height:100%; width:0%; background:white; }
+.bar { height:100%; width:0%; background:#7ED321; }
 
 #reader { width:300px; margin:10px auto; }
 </style>
@@ -303,7 +304,7 @@ function render(){
 
 if(estado==="inicio"){
   app.innerHTML = `
-    <h2>⚙️ CONFIGURAÇÃO2</h2>
+    <h2>⚙️ CONFIGURAÇÃO</h2>
 
     <div class="switch-container">
       <span>🔊 Leitura em Voz</span>
@@ -314,15 +315,19 @@ if(estado==="inicio"){
       </label>
     </div>
 
+    <div class="switch-container">
     <p>Fonte</p>
-    <input type="range" min="14" max="28"
-      value="${localStorage.getItem('fonte')||18}"
-      onchange="setFonte(this.value)">
+        <input type="range" min="14" max="28"
+          value="${localStorage.getItem('fonte')||18}"
+          onchange="setFonte(this.value)">
+    </div>
 
-    <p>Tempo: <span id="tempoLabel">${tempoTotal/60000} min</span></p>
-    <input type="range" min="0.1" max="20"
-      value="${tempoTotal/60000}"
-      onchange="setTempo(this.value)">
+    <div class="switch-container">
+        <p>Tempo: <span id="tempoLabel">${tempoTotal/60000} min</span></p>
+        <input type="range" min="0.1" max="20"
+          value="${tempoTotal/60000}"
+          onchange="setTempo(this.value)">
+    </div>
 
     <button class="planejamento" onclick="irPlanejamento()">➡️ Iniciar</button>
   `;
@@ -352,6 +357,7 @@ else if(estado==="score"){
   app.innerHTML=`
     
     <h2>📊 FEEDBACK METACOGNITIVO</h2>
+    <div class="card" style="display: block;">
     <h3>${f.titulo}</h3>
 
     <p><strong>Interpretação:</strong><br>${f.interpretacao}</p>
@@ -359,6 +365,7 @@ else if(estado==="score"){
     <p><strong>Significado metacognitivo:</strong><br>${f.significado}</p>
 
     <p><strong>Direcionamento:</strong><br>${f.direcionamento}</p>
+    </div>
 
     <button onclick="reiniciar()">🔁 Novo ciclo</button>
   `;
@@ -414,7 +421,7 @@ function telaCard(){
         <p id="msg">Escolha uma carta...</p>
       </div>
       
-      <button onclick="scanQR(${estado})">📷 Ler QR</button>
+      <button onclick="scanQR('${estado}')">📷 Ler QR</button>
       <div id="reader"></div>
         
     `}    
