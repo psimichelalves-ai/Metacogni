@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>MetaCog</title>
+<title>Baralho Metacognitivo</title>
 
 <link rel="manifest" href="manifest.json">
 
@@ -17,7 +17,7 @@ body {
   margin:0;
   font-family: Arial;
   font-size: var(--fontSize);
-  background:#1e3c72;
+  background:#030011;
   color:white;
   display:flex;
   justify-content:center;
@@ -97,11 +97,20 @@ input:checked + .slider:before {
 }
 
 /* CORES */
-.planejamento { background:#4A90E2; }
+/*.planejamento { background:#4A90E2; }
 .estude { background:#8E44AD; }
 .monitoramento { background:#F5A623; }
 .avaliacao { background:#7ED321; }
-.reflexao { background:#8E44AD; }
+.reflexao { background:#8E44AD; }*/
+
+.planejamento { background:#745bff; }
+.estude { background:#7ED321; }
+.monitoramento { background:#fa62cc; }
+.avaliacao { background:#ff7a41; }
+.reflexao { background:#7ED321; }
+
+
+
 
 
 .progress {
@@ -294,7 +303,7 @@ function render(){
 
 if(estado==="inicio"){
   app.innerHTML = `
-    <h2>⚙️ CONFIGURAÇÃO1</h2>
+    <h2>⚙️ CONFIGURAÇÃO</h2>
 
     <div class="switch-container">
       <span>🔊 Leitura em Voz</span>
@@ -557,6 +566,9 @@ function scanQR(estadoAtual) {
         mensagem = "QR Code inválido.";
       } 
       else if (grupo !== estadoAtual.toLowerCase()) {
+      
+        if (estadoAtual == avaliacao) {estadoAtual = "avaliação"};
+        
         mensagem = `Atenção!️ Esta carta não pertence a etapa de ${estadoAtual.toUpperCase()}.`;
       } 
       else {
