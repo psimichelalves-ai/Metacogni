@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Baralho Metacognitivo</title>
+<title>MetaCog</title>
 
 <link rel="manifest" href="manifest.json">
 
@@ -149,6 +149,60 @@ let intervalo;
 let score = { monitoramento:"", avaliacao:"" };
 let podeIniciarTimer = false;
 
+// ---------------- CARTAS -----------------
+const FRASES = {
+  // 🟦 PLANEJAMENTO
+  PLANEJ01: "Qual é o objetivo deste conteúdo que vou estudar?",
+  PLANEJ02: "O que preciso compreender para considerar que aprendi?",
+  PLANEJ03: "Como posso verificar se realmente compreendi esse conteúdo?",
+  PLANEJ04: "O que eu já sei que pode me ajudar nesse estudo?",
+  PLANEJ05: "Este conteúdo está claro para mim ou ainda está confuso?",
+  PLANEJ06: "Esse conteúdo exige mais memorização ou compreensão?",
+  PLANEJ07: "Qual parte desse conteúdo parece mais difícil?",
+  PLANEJ08: "Em qual aspecto preciso prestar mais atenção?",
+  PLANEJ09: "Estou focado em compreender ou apenas em concluir a tarefa?",
+  PLANEJ10: "O que pode dificultar minha aprendizagem neste conteúdo?",
+  PLANEJ11: "Qual parte devo compreender primeiro?",
+  PLANEJ12: "Tenho clareza do que significa 'entender' esse conteúdo?",
+  PLANEJ13: "Que estratégia de estudo vou utilizar (resumo, prática, explicação)?",
+  PLANEJ14: "Quanto tempo preciso dedicar para atingir esse objetivo?",
+  PLANEJ15: "Como saberei que atingi o objetivo de aprendizagem?",
+
+  // 🟨 MONITORAMENTO
+  MONITO01: "Estou avançando na compreensão deste conteúdo?",
+  MONITO02: "O que já consegui compreender até agora?",
+  MONITO03: "O que ainda não está claro para mim?",
+  MONITO04: "Estou realmente entendendo ou apenas lendo?",
+  MONITO05: "Consigo explicar o que acabei de estudar?",
+  MONITO06: "Em qual parte estou com mais dificuldade?",
+  MONITO07: "Estou percebendo quando não entendo?",
+  MONITO08: "Minha compreensão está melhorando ao longo do estudo?",
+  MONITO09: "Estou acompanhando meu próprio raciocínio?",
+  MONITO10: "Estou focado nas partes mais importantes do conteúdo?",
+  MONITO11: "O que estou fazendo agora está me ajudando a aprender?",
+  MONITO12: "Estou confuso em algum ponto essencial?",
+  MONITO13: "Consigo identificar onde estou errando?",
+  MONITO14: "Estou ignorando alguma dificuldade?",
+  MONITO15: "O que ainda falta para eu compreender melhor esse conteúdo?",
+
+  // 🟩 AVALIAÇÃO
+  AVALIA01: "Alcancei o objetivo deste estudo?",
+  AVALIA02: "O que eu realmente compreendi?",
+  AVALIA03: "O que ainda não compreendi adequadamente?",
+  AVALIA04: "Consigo explicar esse conteúdo com clareza?",
+  AVALIA05: "Minha compreensão é suficiente ou ainda é parcial?",
+  AVALIA06: "Minha percepção de aprendizagem foi correta?",
+  AVALIA07: "Achei que sabia algo que, na verdade, não sabia?",
+  AVALIA08: "Onde estão minhas principais dificuldades?",
+  AVALIA09: "Meu entendimento está organizado ou fragmentado?",
+  AVALIA10: "Consigo aplicar esse conteúdo em outra situação?",
+  AVALIA11: "O objetivo foi atingido totalmente ou parcialmente?",
+  AVALIA12: "O que faltou para compreender completamente?",
+  AVALIA13: "Se eu tivesse que estudar novamente, o que faria diferente?",
+  AVALIA14: "Qual estratégia funcionou melhor para minha aprendizagem?",
+  AVALIA15: "O que preciso fazer para melhorar na próxima vez?"
+};
+
 // ---------------- VLibras ----------------
 
 new window.VLibras.Widget('https://vlibras.gov.br/app');
@@ -240,7 +294,7 @@ function render(){
 
 if(estado==="inicio"){
   app.innerHTML = `
-    <h2>⚙️ CONFIGURAÇÃO</h2>
+    <h2>⚙️ CONFIGURAÇÃO1</h2>
 
     <div class="switch-container">
       <span>🔊 Leitura em Voz</span>
@@ -351,7 +405,7 @@ function telaCard(){
         <p id="msg">Escolha uma carta...</p>
       </div>
       
-      <button onclick="scanQR()">📷 Ler QR</button>
+      <button onclick="scanQR(estado)">📷 Ler QR</button>
       <div id="reader"></div>
         
     `}    
@@ -471,16 +525,47 @@ function reiniciar(){
 
 // ---------------- QR ----------------
 
-function scanQR(){
+// 🔹 Detecta o grupo pelo prefixo do código
+function obterGrupo(codigo) {
+  if (codigo.startsWith("PLANEJ")) return "planejamento";
+  if (codigo.startsWith("MONITO")) return "monitoramento";
+  if (codigo.startsWith("AVALIA")) return "avaliacao";
+  return null;
+}
 
+// 🔹 Busca a frase
+function obterFrase(codigo) {
+  return FRASES[codigo] || null;
+}
+
+// 🔹 Função principal com validação de estado
+function scanQR(estadoAtual) {
   const html5QrCode = new Html5Qrcode("reader");
 
   html5QrCode.start(
     { facingMode: "environment" },
-    { fps:10, qrbox:250 },
-    (decodedText)=>{
-      document.getElementById("msg").innerText=decodedText;
-      falar(decodedText);
+    { fps: 10, qrbox: 250 },
+    (decodedText) => {
+
+      const codigo = decodedText.toUpperCase().trim();
+      const grupo = obterGrupo(codigo);
+      const frase = obterFrase(codigo);
+
+      let mensagem;
+
+      if (!grupo || !frase) {
+        mensagem = "QR Code inválido.";
+      } 
+      else if (grupo !== estadoAtual.toLowerCase()) {
+        mensagem = `Atenção!️ Esta carta não pertence a etapa de ${estadoAtual.toUpperCase()}.`;
+      } 
+      else {
+        mensagem = frase;
+      }
+
+      document.getElementById("msg").innerText = mensagem;
+      falar(mensagem);
+
       html5QrCode.stop();
     }
   );
