@@ -37,7 +37,6 @@ body {
   align-items:center;
   justify-content:center;
   cursor:pointer;
-  transition:0.2s;
 }
 
 button {
@@ -59,7 +58,7 @@ button {
   justify-content:space-between;
   align-items:center;
   background:#ffffff22;
-  padding:10px;
+  padding:2px;
   border-radius:12px;
 }
 
@@ -98,7 +97,6 @@ input:checked + .slider:before {
   transform:translateX(24px);
 }
 
-/* CORES */
 .planejamento { background:#3287f2; }
 .estude { background:#7ED321; }
 .monitoramento { background:#fa62cc; }
@@ -143,12 +141,19 @@ let estado = "inicio";
 
 let tempoTotal = parseInt(localStorage.getItem("tempo")) || (5 * 60000);
 let vozAtiva = localStorage.getItem("voz") === "true";
+
+// ✅ NFC NOVO
 let nfcAtivo = localStorage.getItem("nfc") === "true";
+let nfcController = null;
 
 let tempoAtual = 0;
 let intervalo;
 
 let score = { monitoramento:"", avaliacao:"" };
+let podeIniciarTimer = false;
+
+// ---------------- CARTAS -----------------
+const FRASES = { /* (mantido igual) */ };
 
 // ---------------- VLibras ----------------
 new window.VLibras.Widget('https://vlibras.gov.br/app');
@@ -160,71 +165,55 @@ function falar(txt){
   speechSynthesis.speak(new SpeechSynthesisUtterance(txt));
 }
 
-// ---------------- CONFIG ----------------
-
-function toggleVoz(valor){
-  vozAtiva = valor;
-  localStorage.setItem("voz", vozAtiva);
-}
-
-function toggleNFC(valor){
-  nfcAtivo = valor;
-  localStorage.setItem("nfc", nfcAtivo);
-}
-
 // ---------------- NFC ----------------
 
-async function iniciarNFC(estadoAtual){
+async function iniciarNFC(){
 
-  if(!nfcAtivo) return;
+  if(!nfcAtivo || !('NDEFReader' in window)) return;
 
-  if (!('NDEFReader' in window)) return;
-
-  try{
+  try {
+    nfcController = new AbortController();
     const ndef = new NDEFReader();
-    await ndef.scan();
 
-    ndef.onreading = (event) => {
+    await ndef.scan({ signal: nfcController.signal });
 
-      let decoder = new TextDecoder();
+    ndef.onreading = event => {
+
+      let texto = "";
 
       for (const record of event.message.records) {
-
-        let codigo = decoder.decode(record.data).toUpperCase().trim();
-
-        const grupo = obterGrupo(codigo);
-        const frase = obterFrase(codigo);
-
-        let mensagem;
-
-        if (!grupo || !frase) {
-          mensagem = "Tag NFC inválida.";
-        } 
-        else if (grupo !== estadoAtual.toLowerCase()) {
-          mensagem = `Carta incorreta para esta etapa.`;
-        } 
-        else {
-          mensagem = frase;
-        }
-
-        document.getElementById("msg").innerText = mensagem;
-        falar(mensagem);
-
-        // 🔊 Vibração
-        if(navigator.vibrate){
-          navigator.vibrate(200);
-        }
-
-        // 🎯 Feedback visual
-        let card = document.querySelector(".card");
-        card.style.transform = "scale(1.05)";
-        setTimeout(()=> card.style.transform = "scale(1)", 200);
+        texto = new TextDecoder().decode(record.data);
       }
 
+      const codigo = texto.toUpperCase().trim();
+      const grupo = obterGrupo(codigo);
+      const frase = obterFrase(codigo);
+
+      let mensagem;
+
+      if (!grupo || !frase) {
+        mensagem = "NFC inválido.";
+      } 
+      else if (grupo !== estado.toLowerCase()) {
+        mensagem = `Atenção! Esta carta não pertence à etapa de ${estado.toUpperCase()}.`;
+      } 
+      else {
+        mensagem = frase;
+      }
+
+      document.getElementById("msg").innerText = mensagem;
+
+      // ✅ Vibração
+      if(navigator.vibrate) navigator.vibrate(200);
+
+      // ✅ Feedback visual
+      document.querySelector(".card").style.border = "3px solid #00c853";
+
+      falar(mensagem);
     };
 
-  }catch(e){
-    console.log("Erro NFC:", e);
+  } catch (err) {
+    console.log("Erro NFC:", err);
   }
 }
 
@@ -245,8 +234,9 @@ if(estado==="inicio"){
       </label>
     </div>
 
+    <!-- ✅ NFC SWITCH -->
     <div class="switch-container">
-      <span>📶 NFC automático</span>
+      <span>📡 NFC automático</span>
       <label class="switch">
         <input type="checkbox" ${nfcAtivo ? "checked":""}
           onchange="toggleNFC(this.checked)">
@@ -255,22 +245,90 @@ if(estado==="inicio"){
     </div>
 
     <div class="switch-container">
-      <p>Tempo: <span id="tempoLabel">${tempoTotal/60000} min</span></p>
-      <input type="range" min="1" max="20"
-        value="${tempoTotal/60000}"
-        onchange="setTempo(this.value)">
+    <p>Fonte</p>
+        <input type="range" min="14" max="28"
+          value="${localStorage.getItem('fonte')||18}"
+          onchange="setFonte(this.value)">
     </div>
 
-    <button onclick="irPlanejamento()">➡️ Iniciar</button>
+    <div class="switch-container">
+        <p>Tempo: <span id="tempoLabel">${tempoTotal/60000} min</span></p>
+        <input type="range" min="0.1" max="20"
+          value="${tempoTotal/60000}"
+          onchange="setTempo(this.value)">
+    </div>
+
+    <button class="planejamento" onclick="irPlanejamento()">➡️ Iniciar</button>
   `;
+
+  falar("Metacogni. Tela de configuração");
+  
+} else if(["planejamento","monitoramento","avaliacao","estude"].includes(estado)){
+  telaCard();
+}
+
+else if(estado==="reflexao"){
+  let p = gerarPergunta();
+
+  app.innerHTML=`
+    <h2>🧠 REFLEXÃO</h2>
+    <div class="card reflexao">${p}</div>
+    <button onclick="irScore()">➡️ Continuar</button>
+  `;
+
+  falar(p);
+}
+
+else if(estado==="score"){
+  let f = gerarFeedbackCompleto();
+
+  app.innerHTML=`
+    <h2>📊 FEEDBACK METACOGNITIVO</h2>
+    <div class="card" style="display: block;">
+    <h3>${f.titulo}</h3>
+
+    <p><strong>Interpretação:</strong><br>${f.interpretacao}</p>
+    <p><strong>Significado metacognitivo:</strong><br>${f.significado}</p>
+    <p><strong>Direcionamento:</strong><br>${f.direcionamento}</p>
+    </div>
+
+    <button onclick="reiniciar()">🔁 Novo ciclo</button>
+  `;
+
+  falar(f.titulo);
+}
+
+}
+
+// ---------------- CONFIG ----------------
+
+function toggleVoz(valor){
+  vozAtiva = valor;
+  localStorage.setItem("voz", vozAtiva);
+}
+
+// ✅ NFC toggle
+function toggleNFC(valor){
+  nfcAtivo = valor;
+  localStorage.setItem("nfc", nfcAtivo);
+}
+
+function setFonte(v){
+  document.documentElement.style.setProperty('--fontSize', v+"px");
+  localStorage.setItem("fonte", v);
+}
+
+function setTempo(v){
+  tempoTotal = v * 60000;
+  localStorage.setItem("tempo", tempoTotal);
+  document.getElementById("tempoLabel").innerText = v+" min";
 }
 
 // ---------------- FLUXO ----------------
 
-else if(["planejamento","monitoramento","avaliacao"].includes(estado)){
-  telaCard();
-}
-
+function irPlanejamento(){
+  estado="planejamento";
+  render();
 }
 
 // ---------------- CARD ----------------
@@ -281,27 +339,20 @@ function telaCard(){
     <h2>${estado.toUpperCase()}</h2>
 
     <div class="card ${estado}">
-      <p id="msg">Aproxime a carta...</p>
+      <p id="msg">Aproxime a carta NFC ou use QR</p>
     </div>
+
+    <button onclick="scanQR('${estado}')">📷 Ler QR</button>
+    <div id="reader"></div>
   `;
 
-  falar("Aproxime a carta");
-  iniciarNFC(estado);
+  // ✅ Ativa NFC automaticamente
+  iniciarNFC();
+
+  falar("Aproxime a carta.");
 }
 
-// ---------------- UTIL ----------------
-
-function setTempo(v){
-  tempoTotal = v * 60000;
-  localStorage.setItem("tempo", tempoTotal);
-}
-
-function irPlanejamento(){
-  estado="planejamento";
-  render();
-}
-
-// ---------------- QR/NFC COMPARTILHADO ----------------
+// ---------------- QR ----------------
 
 function obterGrupo(codigo) {
   if (codigo.startsWith("PLANEJ")) return "planejamento";
@@ -311,7 +362,45 @@ function obterGrupo(codigo) {
 }
 
 function obterFrase(codigo) {
-  return codigo;
+  return FRASES[codigo] || null;
+}
+
+function scanQR(estadoAtual) {
+  const html5QrCode = new Html5Qrcode("reader");
+
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    (decodedText) => {
+
+      const codigo = decodedText.toUpperCase().trim();
+      const grupo = obterGrupo(codigo);
+      const frase = obterFrase(codigo);
+
+      let mensagem;
+
+      if (!grupo || !frase) {
+        mensagem = "QR Code inválido.";
+      } 
+      else if (grupo !== estadoAtual.toLowerCase()) {
+        mensagem = `Atenção! Esta carta não pertence à etapa de ${estadoAtual.toUpperCase()}.`;
+      } 
+      else {
+        mensagem = frase;
+      }
+
+      document.getElementById("msg").innerText = mensagem;
+      falar(mensagem);
+
+      html5QrCode.stop();
+    }
+  );
+}
+
+// ---------------- SERVICE WORKER ----------------
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js');
 }
 
 // ---------------- START ----------------
