@@ -14,15 +14,16 @@
 :root { --fontSize: 18px; }
 
 body {
-  margin:0;
+  margin-top: 5vh;
   font-family: Arial;
   font-size: var(--fontSize);
   background:#fdfdfd;
   color:#030011;
   display:flex;
   justify-content:center;
-  align-items:center;
-  height:100vh;
+  align-items:flex-start; 
+  min-height:100vh;       
+  overflow-y:auto;        
 }
 
 .container { width:100%; max-width:420px; text-align:center; }
@@ -30,13 +31,35 @@ body {
 .card {
   width:70%;
   margin:auto;
-  padding:30px;
+  padding:20px;
   border-radius:20px;
-  min-height:300px;
+
+  /* 🔹 visual */
+  background: transparent;
+  border:2px solid #3287f2;
+
+  /* 🔹 layout interno */
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  align-items:center;
+
+  min-height:400px;
+  cursor:pointer;
+}
+
+.card h2 {
+  margin:0;
+  text-align:center;
+}
+
+.card p {
+  flex:1;
   display:flex;
   align-items:center;
   justify-content:center;
-  cursor:pointer;
+  text-align:center;
+  margin:0;
 }
 
 button {
@@ -49,6 +72,7 @@ button {
   font-weight:bold;
   color:white;
   background:#3287f2;
+  font-size: inherit;
 }
 
 .switch-container {
@@ -98,16 +122,16 @@ input:checked + .slider:before {
 }
 
 /* CORES */
-/*.planejamento { background:#4A90E2; }
+/*.planejamento { background:#4431a8; }
 .estude { background:#8E44AD; }
-.monitoramento { background:#F5A623; }
-.avaliacao { background:#7ED321; }
+.monitoramento { background:#4431a8; }
+.avaliacao { background:#ff7a41; }
 .reflexao { background:#8E44AD; }*/
 
-.planejamento { background:#3287f2; }
+.planejamento {  border:2px solid #3287f2; }
 .estude { background:#7ED321; }
-.monitoramento { background:#fa62cc; }
-.avaliacao { background:#ff7a41; }
+.monitoramento {  border:2px solid #fa62cc; }
+.avaliacao {  border:2px solid #ff7a41; }
 .reflexao { background:#7ED321; }
 
 
@@ -123,6 +147,25 @@ input:checked + .slider:before {
 }
 
 .bar { height:100%; width:0%; background:#7ED321; }
+
+.info-card {
+  width:80%;
+  margin:10px auto;
+  padding:20px;
+  border-radius:15px;
+  border:2px solid #3287f2;
+  background:transparent;
+  display:none;
+  text-align:center;
+}
+
+.info-card h3 {
+  margin-top:0;
+}
+
+.info-card p {
+  font-size: 0.9em;
+}
 
 #reader { width:300px; margin:10px auto; }
 </style>
@@ -162,6 +205,8 @@ let intervalo;
 
 let score = { monitoramento:"", avaliacao:"" };
 let podeIniciarTimer = false;
+
+let mostrarInstrucoes = false;
 
 // ---------------- CARTAS -----------------
 const FRASES = {
@@ -302,6 +347,12 @@ function gerarFeedbackCompleto(){
   };
 }
 
+//--------------mostrarInstrucoes-----------
+function toggleInstrucoes(){
+  mostrarInstrucoes = !mostrarInstrucoes;
+  render();
+}
+
 // ---------------- RENDER ----------------
 
 function render(){
@@ -341,11 +392,71 @@ if(estado==="inicio"){
           value="${tempoTotal/60000}"
           onchange="setTempo(this.value)">
     </div>
+    
+    <button onclick="toggleInstrucoes()">
+      ${mostrarInstrucoes ? "📖 Ocultar instruções" : "📖 Ver instruções"}
+    </button>
+    
+    <!-- 📘 CARD COLAPSÁVEL -->
+    <div class="info-card" style="display:${mostrarInstrucoes ? 'block':'none'}; text-align: justify;">
+      <h3>Instruções de uso</h3>
+
+      <p>
+      Este recurso auxilia no desenvolvimento da consciência sobre os próprios processos de pensamento e aprendizagem, podendo ser utilizado de forma individual ou em acompanhamento com um profissional.
+      <br><br>
+
+      ⚙️ <strong>Configuração inicial e acessibilidade</strong><br>
+      Antes de iniciar, configure o aplicativo de acordo com sua necessidade:<br>
+      ⏱️ Tempo de estudo | 🔊 Leitura em voz | 🔤 Tamanho da fonte | 🤟 VLibras | 📶 NFC/QR Code: aproxime a carta ou escaneie para leitura automática
+      <br><br>
+
+      1️⃣ <strong>Planejamento</strong><br>
+      Escolha uma carta roxa e identifique: Qual é o objetivo da atividade ou do conteúdo?
+      <br><br>
+
+      2️⃣ <strong>Monitoramento</strong><br>
+      Durante a atividade, escolha uma carta rosa e observe seu processo de compreensão. Ao final, indique sua percepção:<br>
+      ✔ Satisfatório | ⚠️ Parcial | ❌ Insatisfatório
+      <br><br>
+
+      3️⃣ <strong>Avaliação</strong><br>
+      Escolha uma carta laranja e responda: O objetivo foi atingido?<br>
+      ✔ Sim | ❌ Não
+      <br><br>
+
+      4️⃣ <strong>Reflexão (no aplicativo)</strong><br>
+      O aplicativo apresentará uma pergunta reflexiva para análise do processo realizado.
+      <br><br>
+
+      5️⃣ <strong>Relatório Metacognitivo (no aplicativo)</strong><br>
+      Ao final, o aplicativo gerará um feedback automático com base nas suas respostas:<br>
+      🧠 Nível de acurácia metacognitiva (precisão do julgamento)<br>
+      📊 Interpretação do seu processo de aprendizagem<br>
+      🎯 Significado do seu padrão de resposta<br>
+      🔁 Sugestões para melhorar sua estratégia
+      <br><br>
+
+      🎯 <strong>Finalidade</strong><br>
+      Favorecer o desenvolvimento de habilidades metacognitivas, como:<br>
+      Planejar | Monitorar | Avaliar | Ajuste de estratégias cognitivas
+      <br><br>
+
+      👨‍⚕️ <strong>Uso profissional</strong><br>
+      Em contexto clínico ou psicopedagógico, o recurso pode auxiliar na:<br>
+      Identificação de padrões metacognitivos<br>
+      Análise da relação entre percepção e desempenho<br>
+      Intervenção na autorregulação da aprendizagem
+      <br><br>
+
+      💡 <strong>Orientação</strong><br>
+      As respostas não têm caráter avaliativo ou classificatório. O foco está na consciência do processo, favorecendo o desenvolvimento cognitivo e a autonomia do indivíduo.
+      </p>
+    </div>
 
     <button class="planejamento" onclick="irPlanejamento()">➡️ Iniciar</button>
   `;
 
-  falar("Metacogni. Tela de configuração");
+  falar("Metacog. Tela de configuração");
   
 } else if(["planejamento","monitoramento","avaliacao","estude"].includes(estado)){
   telaCard();
@@ -354,9 +465,11 @@ if(estado==="inicio"){
 else if(estado==="reflexao"){
   let p = gerarPergunta();
 
-  app.innerHTML=`
-    <h2>🧠 REFLEXÃO</h2>
-    <div class="card reflexao">${p}</div>
+  app.innerHTML=`    
+    <div class="card reflexao">
+        <h2>🧠 REFLEXÃO</h2>
+        <p>${p}</p>
+    </div>
     <button onclick="irScore()">➡️ Continuar</button>
   `;
 
@@ -369,8 +482,9 @@ else if(estado==="score"){
 
   app.innerHTML=`
     
-    <h2>📊 FEEDBACK METACOGNITIVO</h2>
+    
     <div class="card" style="display: block;">
+    <h2>📊 FEEDBACK METACOGNITIVO</h2>
     <h3>${f.titulo}</h3>
 
     <p><strong>Interpretação:</strong><br>${f.interpretacao}</p>
@@ -423,7 +537,7 @@ function telaCard(){
 
   app.innerHTML=`
     
-    ${estado==="avaliacao" ? `<h2>AVALIAÇÃO</h2>`:`<h2>${estado.toUpperCase()}</h2>`}
+    
 
     ${estado==="estude" ? `
     
@@ -432,10 +546,12 @@ function telaCard(){
         <div class="bar" id="barra"></div>
       </div>
       <div class="card ${estado}">
+        ${estado==="avaliacao" ? `<h2>AVALIAÇÃO</h2>`:`<h2>${estado.toUpperCase()}</h2>`}
         <p id="msg" style="font-size: xx-large;">📚</p>
       </div>
     `:`
       <div class="card ${estado}">
+      ${estado==="avaliacao" ? `<h2>AVALIAÇÃO</h2>`:`<h2>${estado.toUpperCase()}</h2>`}
         <p id="msg">Escolha uma carta...</p>
       </div>
       
@@ -467,7 +583,8 @@ function telaCard(){
     falar("Escolha uma carta.");
     
   // ✅ ativa NFC automaticamente
-  iniciarNFC();
+  if((estado==="planejamento") || (estado==="monitoramento") || (estado==="avaliacao"))
+    iniciarNFC();
   
 }
 
