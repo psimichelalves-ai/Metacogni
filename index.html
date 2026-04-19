@@ -97,11 +97,22 @@ input:checked + .slider:before {
   transform:translateX(24px);
 }
 
+/* CORES */
+/*.planejamento { background:#4A90E2; }
+.estude { background:#8E44AD; }
+.monitoramento { background:#F5A623; }
+.avaliacao { background:#7ED321; }
+.reflexao { background:#8E44AD; }*/
+
 .planejamento { background:#3287f2; }
 .estude { background:#7ED321; }
 .monitoramento { background:#fa62cc; }
 .avaliacao { background:#ff7a41; }
 .reflexao { background:#7ED321; }
+
+
+
+
 
 .progress {
   width:80%;
@@ -142,7 +153,7 @@ let estado = "inicio";
 let tempoTotal = parseInt(localStorage.getItem("tempo")) || (5 * 60000);
 let vozAtiva = localStorage.getItem("voz") === "true";
 
-// ✅ NFC NOVO
+// ✅ NFC
 let nfcAtivo = localStorage.getItem("nfc") === "true";
 let nfcController = null;
 
@@ -153,68 +164,142 @@ let score = { monitoramento:"", avaliacao:"" };
 let podeIniciarTimer = false;
 
 // ---------------- CARTAS -----------------
-const FRASES = { /* (mantido igual) */ };
+const FRASES = {
+  // 🟦 PLANEJAMENTO
+  PLANEJ01: "Qual é o objetivo deste conteúdo que vou estudar?",
+  PLANEJ02: "O que preciso compreender para considerar que aprendi?",
+  PLANEJ03: "Como posso verificar se realmente compreendi esse conteúdo?",
+  PLANEJ04: "O que eu já sei que pode me ajudar nesse estudo?",
+  PLANEJ05: "Este conteúdo está claro para mim ou ainda está confuso?",
+  PLANEJ06: "Esse conteúdo exige mais memorização ou compreensão?",
+  PLANEJ07: "Qual parte desse conteúdo parece mais difícil?",
+  PLANEJ08: "Em qual aspecto preciso prestar mais atenção?",
+  PLANEJ09: "Estou focado em compreender ou apenas em concluir a tarefa?",
+  PLANEJ10: "O que pode dificultar minha aprendizagem neste conteúdo?",
+  PLANEJ11: "Qual parte devo compreender primeiro?",
+  PLANEJ12: "Tenho clareza do que significa 'entender' esse conteúdo?",
+  PLANEJ13: "Que estratégia de estudo vou utilizar (resumo, prática, explicação)?",
+  PLANEJ14: "Quanto tempo preciso dedicar para atingir esse objetivo?",
+  PLANEJ15: "Como saberei que atingi o objetivo de aprendizagem?",
+
+  // 🟨 MONITORAMENTO
+  MONITO01: "Estou avançando na compreensão deste conteúdo?",
+  MONITO02: "O que já consegui compreender até agora?",
+  MONITO03: "O que ainda não está claro para mim?",
+  MONITO04: "Estou realmente entendendo ou apenas lendo?",
+  MONITO05: "Consigo explicar o que acabei de estudar?",
+  MONITO06: "Em qual parte estou com mais dificuldade?",
+  MONITO07: "Estou percebendo quando não entendo?",
+  MONITO08: "Minha compreensão está melhorando ao longo do estudo?",
+  MONITO09: "Estou acompanhando meu próprio raciocínio?",
+  MONITO10: "Estou focado nas partes mais importantes do conteúdo?",
+  MONITO11: "O que estou fazendo agora está me ajudando a aprender?",
+  MONITO12: "Estou confuso em algum ponto essencial?",
+  MONITO13: "Consigo identificar onde estou errando?",
+  MONITO14: "Estou ignorando alguma dificuldade?",
+  MONITO15: "O que ainda falta para eu compreender melhor esse conteúdo?",
+
+  // 🟩 AVALIAÇÃO
+  AVALIA01: "Alcancei o objetivo deste estudo?",
+  AVALIA02: "O que eu realmente compreendi?",
+  AVALIA03: "O que ainda não compreendi adequadamente?",
+  AVALIA04: "Consigo explicar esse conteúdo com clareza?",
+  AVALIA05: "Minha compreensão é suficiente ou ainda é parcial?",
+  AVALIA06: "Minha percepção de aprendizagem foi correta?",
+  AVALIA07: "Achei que sabia algo que, na verdade, não sabia?",
+  AVALIA08: "Onde estão minhas principais dificuldades?",
+  AVALIA09: "Meu entendimento está organizado ou fragmentado?",
+  AVALIA10: "Consigo aplicar esse conteúdo em outra situação?",
+  AVALIA11: "O objetivo foi atingido totalmente ou parcialmente?",
+  AVALIA12: "O que faltou para compreender completamente?",
+  AVALIA13: "Se eu tivesse que estudar novamente, o que faria diferente?",
+  AVALIA14: "Qual estratégia funcionou melhor para minha aprendizagem?",
+  AVALIA15: "O que preciso fazer para melhorar na próxima vez?"
+};
 
 // ---------------- VLibras ----------------
+
 new window.VLibras.Widget('https://vlibras.gov.br/app');
 
 // ---------------- VOZ ----------------
+
 function falar(txt){
   if(!vozAtiva) return;
   speechSynthesis.cancel();
   speechSynthesis.speak(new SpeechSynthesisUtterance(txt));
 }
 
-// ---------------- NFC ----------------
+// ---------------- FEEDBACK METACOGNITIVO ----------------
 
-async function iniciarNFC(){
+function gerarFeedbackCompleto(){
 
-  if(!nfcAtivo || !('NDEFReader' in window)) return;
-
-  try {
-    nfcController = new AbortController();
-    const ndef = new NDEFReader();
-
-    await ndef.scan({ signal: nfcController.signal });
-
-    ndef.onreading = event => {
-
-      let texto = "";
-
-      for (const record of event.message.records) {
-        texto = new TextDecoder().decode(record.data);
-      }
-
-      const codigo = texto.toUpperCase().trim();
-      const grupo = obterGrupo(codigo);
-      const frase = obterFrase(codigo);
-
-      let mensagem;
-
-      if (!grupo || !frase) {
-        mensagem = "NFC inválido.";
-      } 
-      else if (grupo !== estado.toLowerCase()) {
-        mensagem = `Atenção! Esta carta não pertence à etapa de ${estado.toUpperCase()}.`;
-      } 
-      else {
-        mensagem = frase;
-      }
-
-      document.getElementById("msg").innerText = mensagem;
-
-      // ✅ Vibração
-      if(navigator.vibrate) navigator.vibrate(200);
-
-      // ✅ Feedback visual
-      document.querySelector(".card").style.border = "3px solid #00c853";
-
-      falar(mensagem);
+  // ✔ + ✔ 🧠
+  if(score.monitoramento==="ok" && score.avaliacao==="sim"){
+    return {
+      titulo: "Alta acurácia metacognitiva" +". "+ "(precisão do julgamento)",
+      interpretacao: "Seu julgamento sobre o estudo foi coerente com o resultado.",
+      significado: "Você demonstrou alta acurácia metacognitiva, avaliando corretamente sua própria aprendizagem.",
+      direcionamento: "Continue utilizando essa estratégia. Tente agora aprofundar o nível de compreensão do conteúdo."
     };
-
-  } catch (err) {
-    console.log("Erro NFC:", err);
   }
+
+  // ✔ + ❌ ⚠️
+  if(score.monitoramento==="ok" && score.avaliacao==="nao"){
+    return {
+      titulo: "Baixa acurácia metacognitiva" +". "+ "(superestimação)",
+      interpretacao: "Você acreditou que havia compreendido, mas o objetivo não foi atingido.",
+      significado: "Há um viés otimista, indicando dificuldade em perceber os limites da própria compreensão.",
+      direcionamento: "Reveja o conteúdo com mais atenção e busque evidências concretas de aprendizagem."
+    };
+  }
+
+  // ⚠️ + ✔ 🧠
+  if(score.monitoramento==="parcial" && score.avaliacao==="sim"){
+    return {
+      titulo: "Acurácia metacognitiva moderada" +". "+ "(precisão parcial)",
+      interpretacao: "Você teve dúvidas durante o estudo, mas conseguiu atingir o objetivo.",
+      significado: "Você apresenta acurácia metacognitiva em desenvolvimento, reconhecendo parcialmente seu desempenho.",
+      direcionamento: "Continue praticando. Tente identificar com mais precisão quando realmente compreende o conteúdo."
+    };
+  }
+
+  // ⚠️ + ❌ 🧠
+  if(score.monitoramento==="parcial" && score.avaliacao==="nao"){
+    return {
+      titulo: "Acurácia metacognitiva moderada" +". "+ "(baixa precisão)",
+      interpretacao: "Você percebeu parcialmente as dificuldades, e o objetivo não foi atingido.",
+      significado: "Há indícios de monitoramento metacognitivo, mas ainda com baixa precisão na avaliação.",
+      direcionamento: "Aprofunde sua análise durante o estudo. Tente identificar exatamente onde está a dificuldade."
+    };
+  }
+
+  // ❌ + ✔ ⚠️
+  if(score.monitoramento==="ruim" && score.avaliacao==="sim"){
+    return {
+      titulo: "Baixa acurácia metacognitiva" +". "+ "(subestimação)",
+      interpretacao: "Você acreditou que não havia compreendido, mas conseguiu atingir o objetivo.",
+      significado: "Há um viés pessimista, indicando insegurança sobre a própria aprendizagem.",
+      direcionamento: "Confie mais no seu processo. Procure reconhecer os sinais de que você está aprendendo."
+    };
+  }
+
+  // ❌ + ❌ 🔍
+  if(score.monitoramento==="ruim" && score.avaliacao==="nao"){
+    return {
+      titulo: "Consciência da dificuldade" +". "+ "(acurácia metacognitiva adequada)",
+      interpretacao: "Você identificou corretamente que não atingiu o objetivo.",
+      significado: "Você demonstrou consciência da dificuldade, que é essencial para o desenvolvimento metacognitivo.",
+      direcionamento: "Ajuste sua estratégia de estudo (tempo, método ou foco) antes de tentar novamente."
+    };
+  }
+
+  // fallback 🧠
+  return {
+    titulo: "Reflexão geral",
+    interpretacao: "Continue refletindo sobre seu processo de aprendizagem.",
+    significado: "A metacognição envolve observar, avaliar e ajustar sua forma de aprender.",
+    direcionamento: "Retorne ao conteúdo e tente aplicar uma estratégia diferente."
+  };
 }
 
 // ---------------- RENDER ----------------
@@ -223,7 +308,7 @@ function render(){
 
 if(estado==="inicio"){
   app.innerHTML = `
-    <h2>⚙️ CONFIGURAÇÃO</h2>
+    <h2>⚙️ CONFIGURAÇÃO1</h2>
 
     <div class="switch-container">
       <span>🔊 Leitura em Voz</span>
@@ -233,8 +318,7 @@ if(estado==="inicio"){
         <span class="slider"></span>
       </label>
     </div>
-
-    <!-- ✅ NFC SWITCH -->
+    
     <div class="switch-container">
       <span>📡 NFC automático</span>
       <label class="switch">
@@ -280,34 +364,37 @@ else if(estado==="reflexao"){
 }
 
 else if(estado==="score"){
+
   let f = gerarFeedbackCompleto();
 
   app.innerHTML=`
+    
     <h2>📊 FEEDBACK METACOGNITIVO</h2>
     <div class="card" style="display: block;">
     <h3>${f.titulo}</h3>
 
     <p><strong>Interpretação:</strong><br>${f.interpretacao}</p>
+
     <p><strong>Significado metacognitivo:</strong><br>${f.significado}</p>
+
     <p><strong>Direcionamento:</strong><br>${f.direcionamento}</p>
     </div>
 
     <button onclick="reiniciar()">🔁 Novo ciclo</button>
   `;
 
-  falar(f.titulo);
+  falar(f.titulo + ". Interpretação:" + ". " + f.interpretacao + ". Significado metacognitivo:" + ". " + f.significado + ". Direcionamento:" + ". " + f.direcionamento);
 }
 
 }
 
-// ---------------- CONFIG ----------------
+// ---------------- RESTANTE DO FLUXO ----------------
 
 function toggleVoz(valor){
   vozAtiva = valor;
   localStorage.setItem("voz", vozAtiva);
 }
 
-// ✅ NFC toggle
 function toggleNFC(valor){
   nfcAtivo = valor;
   localStorage.setItem("nfc", nfcAtivo);
@@ -319,41 +406,164 @@ function setFonte(v){
 }
 
 function setTempo(v){
+  // tempoTotal = v * 60000; //Descomentar essa linha e comentar a linha baixa quando implantar xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   tempoTotal = v * 60000;
   localStorage.setItem("tempo", tempoTotal);
   document.getElementById("tempoLabel").innerText = v+" min";
 }
-
-// ---------------- FLUXO ----------------
 
 function irPlanejamento(){
   estado="planejamento";
   render();
 }
 
-// ---------------- CARD ----------------
-
 function telaCard(){
 
+  podeIniciarTimer = true;
+
   app.innerHTML=`
-    <h2>${estado.toUpperCase()}</h2>
+    
+    ${estado==="avaliacao" ? `<h2>AVALIAÇÃO</h2>`:`<h2>${estado.toUpperCase()}</h2>`}
 
-    <div class="card ${estado}">
-      <p id="msg">Aproxime a carta NFC ou use QR</p>
-    </div>
+    ${estado==="estude" ? `
+    
+    
+      <div class="progress">
+        <div class="bar" id="barra"></div>
+      </div>
+      <div class="card ${estado}">
+        <p id="msg" style="font-size: xx-large;">📚</p>
+      </div>
+    `:`
+      <div class="card ${estado}">
+        <p id="msg">Escolha uma carta...</p>
+      </div>
+      
+      <button onclick="scanQR('${estado}')">📷 Ler QR</button>
+      <div id="reader"></div>
+        
+    `}    
 
-    <button onclick="scanQR('${estado}')">📷 Ler QR</button>
-    <div id="reader"></div>
+    ${estado==="monitoramento" ? `
+      <button onclick="responder('ok'); proximo();">✔ Satisfatório</button>
+      <button onclick="responder('parcial'); proximo();">⚠️ Parcial</button>
+      <button onclick="responder('ruim'); proximo();">❌ Insatisfatório</button>
+    `:""}
+
+    ${estado==="avaliacao" ? `
+      <button onclick="avaliar('sim'); proximo();">✔ Atingiu</button>
+      <button onclick="avaliar('nao'); proximo();">❌ Não</button>
+    `:""}
+    
+    ${estado==="planejamento" ? `
+      <button onclick="proximo(); estudar();">➡️ Próximo</button>
+    `:""}
+    
   `;
 
-  // ✅ Ativa NFC automaticamente
+  if(estado==="estude")
+    falar("Estude."); 
+  else
+    falar("Escolha uma carta.");
+    
+  // ✅ ativa NFC automaticamente
   iniciarNFC();
+  
+}
 
-  falar("Aproxime a carta.");
+function iniciarTimer(){
+  tempoAtual=0;
+  clearInterval(intervalo);
+
+  intervalo=setInterval(()=>{
+    tempoAtual+=100;
+    let p=(tempoAtual/tempoTotal)*100;
+    document.getElementById("barra").style.width=p+"%";
+
+    if(tempoAtual>=tempoTotal){
+      clearInterval(intervalo);
+      proximo();
+    }
+  },100);
+}
+
+function responder(resp){
+  score.monitoramento=resp;  
+}
+
+function avaliar(resp){
+  score.avaliacao=resp;
+}
+
+function proximo(){
+  if(estado==="planejamento") estado="estude";
+  else if(estado==="estude") estado="monitoramento";
+  else if(estado==="monitoramento") estado="avaliacao";
+  else if(estado==="avaliacao") estado="reflexao";
+
+  render();
+}
+
+function estudar(){
+  /*clearInterval(intervalo);
+  tempoAtual=0;
+  let barra=document.getElementById("barra");
+  if(barra) barra.style.width="0%";
+  podeIniciarTimer=true;*/
+
+  iniciarTimer();
+
+  render();
+}
+
+
+
+function gerarPergunta(){
+  let perguntas = [];
+
+  if (score.monitoramento === "ok") {
+    perguntas = [
+      "Sua compreensão é profunda ou superficial?",
+      "Você consegue explicar esse conteúdo com segurança?",      
+      "Sua compreensão pode estar incompleta?"
+    ];
+  }
+
+  else if (score.monitoramento === "parcial") {
+    perguntas = [
+      "Onde sua compreensão está incompleta?",
+      "O que falta para atingir o objetivo?",
+      "Qual parte precisa de mais atenção?"
+    ];
+  }
+
+  else {
+    perguntas = [
+      "O que você faria diferente para compreender melhor?",
+      "O que precisa revisar primeiro?",
+      "O que ainda precisa aprender?"
+    ];
+  }
+
+  let pergunta = perguntas[Math.floor(Math.random() * perguntas.length)];
+
+  return pergunta;
+}
+
+function irScore(){
+  estado="score";
+  render();
+}
+
+function reiniciar(){
+  estado="inicio";
+  score={monitoramento:"",avaliacao:""};
+  render();
 }
 
 // ---------------- QR ----------------
 
+// 🔹 Detecta o grupo pelo prefixo do código
 function obterGrupo(codigo) {
   if (codigo.startsWith("PLANEJ")) return "planejamento";
   if (codigo.startsWith("MONITO")) return "monitoramento";
@@ -361,10 +571,12 @@ function obterGrupo(codigo) {
   return null;
 }
 
+// 🔹 Busca a frase
 function obterFrase(codigo) {
   return FRASES[codigo] || null;
 }
 
+// 🔹 Função principal com validação de estado
 function scanQR(estadoAtual) {
   const html5QrCode = new Html5Qrcode("reader");
 
@@ -383,7 +595,10 @@ function scanQR(estadoAtual) {
         mensagem = "QR Code inválido.";
       } 
       else if (grupo !== estadoAtual.toLowerCase()) {
-        mensagem = `Atenção! Esta carta não pertence à etapa de ${estadoAtual.toUpperCase()}.`;
+      
+        if (estadoAtual == "avaliacao") {estadoAtual = "avaliação"};
+        
+        mensagem = `Atenção!️ Esta carta não pertence a etapa de ${estadoAtual.toUpperCase()}.`;
       } 
       else {
         mensagem = frase;
@@ -395,6 +610,66 @@ function scanQR(estadoAtual) {
       html5QrCode.stop();
     }
   );
+}
+
+// ---------------- NFC ----------------
+
+async function iniciarNFC(){
+
+  if(!nfcAtivo || !('NDEFReader' in window)) return;
+
+  try {
+
+    if(nfcController) nfcController.abort();
+
+    nfcController = new AbortController();
+    const ndef = new NDEFReader();
+
+    await ndef.scan({ signal: nfcController.signal });
+
+    ndef.onreading = event => {
+
+      let texto = "";
+
+      for (const record of event.message.records) {
+        texto = new TextDecoder().decode(record.data);
+      }
+
+      const codigo = texto.toUpperCase().trim();
+      const grupo = obterGrupo(codigo);
+      const frase = obterFrase(codigo);
+
+      let mensagem;
+
+      if (!grupo || !frase) {
+        mensagem = "NFC inválido.";
+      } 
+      else if (grupo !== estado.toLowerCase()) {
+        mensagem = `Atenção! Esta carta não pertence a etapa de ${estado.toUpperCase()}.`;
+      } 
+      else {
+        mensagem = frase;
+      }
+
+      const el = document.getElementById("msg");
+      if(el) el.innerText = mensagem;
+
+      // Vibração
+      if(navigator.vibrate) navigator.vibrate(200);
+
+      // Feedback visual leve (não quebra layout)
+      const card = document.querySelector(".card");
+      if(card){
+        card.style.boxShadow = "0 0 15px #00c853";
+        setTimeout(()=> card.style.boxShadow = "none", 500);
+      }
+
+      falar(mensagem);
+    };
+
+  } catch (err) {
+    console.log("Erro NFC:", err);
+  }
 }
 
 // ---------------- SERVICE WORKER ----------------
