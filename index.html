@@ -11,47 +11,156 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
-:root { --fontSize: 18px; }
-
-body {
-  margin-top: 5vh;
-  font-family: Arial;
-  font-size: var(--fontSize);
-  background:#fdfdfd;
-  color:#030011;
-  display:flex;
-  justify-content:center;
-  align-items:flex-start; 
-  min-height:100vh;       
-  overflow-y:auto;        
+:root { 
+  --fontSize: 18px;
+  --bg-dark: #070710;
+  --neon-blue: #00eaff;
+  --neon-pink: #ff2fd1;
+  --neon-orange: #ff7a41;
+  --glass: rgba(255,255,255,0.05);
 }
 
-.container { width:100%; max-width:420px; text-align:center; }
+body {
+  margin:0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: var(--fontSize);
+  background: radial-gradient(circle at top, #0a0a1a, #000);
+  color:#e6faff;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding-top:80px;
+  min-height:100vh;
+  overflow-y:auto;
+}
 
+/* 🔷 TOPBAR MODERNA */
+.topbar {
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:70px;
+
+  display:flex;
+  align-items:center;
+  
+  gap:10px;
+
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(10px);
+
+  border-bottom:1px solid rgba(255,255,255,0.1);
+
+  z-index:999;
+}
+
+/* logo */
+.logo {
+  height:100%;
+  
+}
+
+/* título */
+.app-title {
+  font-size:20px;
+  font-weight:bold;
+  letter-spacing:1px;
+
+  background: linear-gradient(90deg, #00eaff, #ff2fd1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.container {
+  width:100%;
+  max-width:420px;
+  text-align:center;
+  padding:20px 10px;
+}
+
+/* botão fechar */
+.close-btn {
+  position:absolute;
+  right:15px;
+
+  width:35px;
+  height:35px;
+
+  border:none;
+  border-radius:50%;
+
+  background: rgba(255,255,255,0.1);
+  color:white;
+  font-size:18px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  cursor:pointer;
+
+  transition:.3s;
+}
+
+.close-btn:hover {
+  background:#ff2fd1;
+  box-shadow:0 0 10px #ff2fd1;
+}
+
+/* 🔷 CARD MODERNO */
 .card {
   width:70%;
+  max-width:300px;
   margin:auto;
+
+  aspect-ratio: 7 / 10; /* 🔥 PROPORÇÃO DA CARTA */
+
   padding:20px;
   border-radius:20px;
 
-  /* 🔹 visual */
-  background: transparent;
-  border:2px solid #3287f2;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
 
-  /* 🔹 layout interno */
+  border:1px solid rgba(255,255,255,0.15);
+
   display:flex;
   flex-direction:column;
   justify-content:space-between;
   align-items:center;
 
-  min-height:400px;
-  cursor:pointer;
+  transition:.3s;
 }
+
+/* efeito glow ao passar */
+.card:hover {
+  transform: scale(1.02);
+}
+
+/* cores por etapa */
+.planejamento { border: 2.5px solid #745bff; box-shadow: 0 0 20px #745bff; background: #eff2fd;}
+.monitoramento { border: 2.5px solid #fa62cc; box-shadow: 0 0 20px #fa62cc; background: #eff2fd;}
+.avaliacao { border: 2.5px solid var(--neon-orange); box-shadow: 0 0 20px #ff7a41; background: #eff2fd;}
+    
+.reflexao { border:2.5px solid #00ff9c; box-shadow:0 0 20px #00ff9c; }
+.estude { border:2.5px solid #00ff9c; box-shadow:0 0 20px #00ff9c; }
+.feedback { border:2.5px solid #00ff9c; box-shadow:0 0 20px #00ff9c; }
 
 .card h2 {
   margin:0;
-  text-align:center;
+  font-weight:600;
+  letter-spacing:1px;
 }
+
+.card.planejamento h2 {color: #745bff;}
+.card.planejamento p {color: #030011; font-size: 1.8em;}
+.card.monitoramento h2 {color: #fa62cc;}
+.card.monitoramento p {color: #030011; font-size: 1.8em;}
+.card.avaliacao h2 {color: #ff7a41;}
+.card.avaliacao p {color: #030011; font-size: 1.8em;}
+
+.reflexao p {font-size: 1.8em;}
+.feedback p {font-size: 1.1em;}
 
 .card p {
   flex:1;
@@ -59,33 +168,49 @@ body {
   align-items:center;
   justify-content:center;
   text-align:center;
-  margin:0;
+  margin:10px 0;
 }
 
+/* 🔘 BOTÕES */
 button {
-  width:80%;
-  padding:15px;
+  width:81%;
+  padding:14px;
   margin:10px auto;
   display:block;
   border:none;
-  border-radius:10px;
+  border-radius:12px;
+
   font-weight:bold;
+  font-size:inherit;
+
   color:white;
-  background:#3287f2;
-  font-size: inherit;
+  background: linear-gradient(45deg, #00eaff, #0077ff);
+
+  box-shadow: 0 0 10px #00eaff;
+  transition:.3s;
 }
 
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px #00eaff;
+}
+
+/* 🔘 SWITCH */
 .switch-container {
-  width:80%;
-  margin:15px auto;
+  width:75%;
+  margin:12px auto;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  background:#ffffff22;
-  padding:2px;
+
+  background: var(--glass);
   border-radius:12px;
+  padding:10px;
+
+  border:1px solid rgba(255,255,255,0.1);
 }
 
+/* 🔁 TOGGLE */
 .switch {
   position: relative;
   width: 50px;
@@ -97,7 +222,7 @@ button {
 .slider {
   position:absolute;
   top:0; left:0; right:0; bottom:0;
-  background:#ccc;
+  background:#333;
   border-radius:34px;
 }
 
@@ -114,64 +239,67 @@ button {
 }
 
 input:checked + .slider {
-  background:#00c853;
+  background:#00eaff;
 }
 
 input:checked + .slider:before {
   transform:translateX(24px);
 }
 
-/* CORES */
-/*.planejamento { background:#4431a8; }
-.estude { background:#8E44AD; }
-.monitoramento { background:#4431a8; }
-.avaliacao { background:#ff7a41; }
-.reflexao { background:#8E44AD; }*/
-
-.planejamento {  border:2px solid #3287f2; }
-.estude { background:#7ED321; }
-.monitoramento {  border:2px solid #fa62cc; }
-.avaliacao {  border:2px solid #ff7a41; }
-.reflexao { background:#7ED321; }
-
-
-
-
-
+/* 📊 PROGRESS BAR */
 .progress {
-  width:80%;
+  width:85%;
   height:6px;
-  background:#ccc;
-  margin:10px auto;
+  background:#222;
+  margin:15px auto;
   border-radius:5px;
 }
 
-.bar { height:100%; width:0%; background:#7ED321; }
+.bar {
+  height:100%;
+  width:0%;
+  background: linear-gradient(90deg, #00eaff, #00ff9c);
+  box-shadow:0 0 10px #00eaff;
+}
 
+/* 📘 INSTRUÇÕES */
 .info-card {
-  width:80%;
+  width:85%;
   margin:10px auto;
   padding:20px;
   border-radius:15px;
-  border:2px solid #3287f2;
-  background:transparent;
+
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+
+  border:1px solid var(--neon-blue);
+  box-shadow:0 0 10px var(--neon-blue);
+
   display:none;
-  text-align:center;
+  text-align:justify;
+  color:#e6faff;
 }
 
 .info-card h3 {
-  margin-top:0;
+  text-align:center;
 }
 
-.info-card p {
-  font-size: 0.9em;
+/* QR */
+#reader {
+  width:300px;
+  margin:10px auto;
+  border-radius:10px;
+  overflow:hidden;
 }
-
-#reader { width:300px; margin:10px auto; }
 </style>
 </head>
 
 <body>
+
+<div class="topbar">
+  <img src="logobarra.png" alt="MetaCog" class="logo">
+  <button class="close-btn" onclick="fecharApp()">✖</button>
+</div>
 
 <div class="container">
   <div id="app"></div>
@@ -357,9 +485,16 @@ function toggleInstrucoes(){
 
 function render(){
 
-if(estado==="inicio"){
-  app.innerHTML = `
-    <h2>⚙️ CONFIGURAÇÃO1</h2>
+  // 🔽 garante que sempre inicia no topo
+  //window.scrollTo(0,0);
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+
+  if(estado==="inicio"){
+   app.innerHTML = `
+    <h2>CONFIGURAÇÃO</h2>
 
     <div class="switch-container">
       <span>🔊 Leitura em Voz</span>
@@ -453,7 +588,7 @@ if(estado==="inicio"){
       </p>
     </div>
 
-    <button class="planejamento" onclick="irPlanejamento()">➡️ Iniciar</button>
+    <button onclick="irPlanejamento()">➡️ Iniciar</button>
   `;
 
   falar("Metacog. Tela de configuração");
@@ -467,7 +602,7 @@ else if(estado==="reflexao"){
 
   app.innerHTML=`    
     <div class="card reflexao">
-        <h2>🧠 REFLEXÃO</h2>
+        <h2>REFLEXÃO</h2>
         <p>${p}</p>
     </div>
     <button onclick="irScore()">➡️ Continuar</button>
@@ -483,8 +618,8 @@ else if(estado==="score"){
   app.innerHTML=`
     
     
-    <div class="card" style="display: block;">
-    <h2>📊 FEEDBACK METACOGNITIVO</h2>
+    <div class="card feedback" style="display: block;">
+    <h2>FEEDBACK METACOGNITIVO</h2>
     <h3>${f.titulo}</h3>
 
     <p><strong>Interpretação:</strong><br>${f.interpretacao}</p>
@@ -528,7 +663,16 @@ function setTempo(v){
 
 function irPlanejamento(){
   estado="planejamento";
+  
   render();
+  
+  // 🔽 rola para o topo suavemente
+  setTimeout(()=>{
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }, 50);
 }
 
 function telaCard(){
@@ -619,6 +763,14 @@ function proximo(){
   else if(estado==="avaliacao") estado="reflexao";
 
   render();
+  
+  // 🔽 rola para o topo suavemente
+  setTimeout(()=>{
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }, 50);
 }
 
 function estudar(){
@@ -793,6 +945,16 @@ async function iniciarNFC(){
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js');
+}
+
+function fecharApp(){
+  // tenta fechar (funciona em PWA instalado)
+  window.close();
+
+  // fallback para navegador
+  setTimeout(()=>{
+    window.history.back();
+  }, 200);
 }
 
 // ---------------- START ----------------
