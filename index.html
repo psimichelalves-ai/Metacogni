@@ -485,6 +485,12 @@ function toggleInstrucoes(){
 
 function render(){
 
+  // 🔐 valida uso
+  if(!verificarValidade()){
+    telaBloqueio();
+    return;
+  }
+
   // 🔽 garante que sempre inicia no topo
   //window.scrollTo(0,0);
   window.scrollTo({
@@ -955,6 +961,41 @@ function fecharApp(){
   setTimeout(()=>{
     window.history.back();
   }, 200);
+}
+
+
+//----------------BLOQUEIO----------------
+function telaBloqueio(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>🔒 Licença expirada</h2>
+      <p>
+        A licença de uso deste aplicativo expirou.
+        <br><br>
+        Para continuar utilizando, entre em contato com o responsável.
+      </p>
+    </div>
+  `;
+}
+
+function verificarValidade(){
+
+  const hoje = new Date().toISOString().split("T")[0]; // formato: YYYY-MM-DD
+  const dataSalva = localStorage.getItem("dataInstalacao");
+
+  // primeira vez
+  if(!dataSalva){
+    localStorage.setItem("dataInstalacao", hoje);
+    return true;
+  }
+
+  // compara datas
+  if(dataSalva === hoje){
+    return true;
+  }
+
+  // expirou
+  return false;
 }
 
 // ---------------- START ----------------
