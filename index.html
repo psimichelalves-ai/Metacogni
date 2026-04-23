@@ -954,13 +954,19 @@ if ('serviceWorker' in navigator) {
 }
 
 function fecharApp(){
-  // tenta fechar (funciona em PWA instalado)
+
+  // 🧠 Detecta se está em modo app (PWA instalado)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+
+  // 🔒 Tenta fechar direto (funciona melhor em PWA)
   window.close();
 
-  // fallback para navegador
-  setTimeout(()=>{
-    window.history.back();
-  }, 200);
+  // ⛔ Evita tela branca: só usa fallback se houver histórico
+  if(!isStandalone && window.history.length > 1){
+    setTimeout(()=>{
+      window.history.back();
+    }, 100);
+  }
 }
 
 
@@ -980,17 +986,27 @@ function telaBloqueio(){
 
 function verificarValidade(){
 
-  const hoje = new Date().toISOString().split("T")[0]; // formato: YYYY-MM-DD
+  const hoje = new Date();
+  const hojeStr = hoje.toISOString().split("T")[0]; // YYYY-MM-DD
+
+  // 🔒 DATA LIMITE (24/04/2026)  
+  const dataLimite = new Date("2026-04-24T21:59:59");
+
+  // ⛔ bloqueio por data fixa
+  if(hoje > dataLimite){
+    return false;
+  }
+
   const dataSalva = localStorage.getItem("dataInstalacao");
 
   // primeira vez
   if(!dataSalva){
-    localStorage.setItem("dataInstalacao", hoje);
+    localStorage.setItem("dataInstalacao", hojeStr);
     return true;
   }
 
-  // compara datas
-  if(dataSalva === hoje){
+  // mesmo dia
+  if(dataSalva === hojeStr){
     return true;
   }
 
