@@ -85,28 +85,10 @@ O aplicativo possui mecanismos simples de controle de acesso:
 
 ---
 
-🎓 Contexto de Desenvolvimento
-
-- Evento: Semana Ubíqua – Faculdade UNINASSAU Mossoró
-- Curso: Psicologia – 2026.1
-- Natureza: Atividade acadêmica aplicada
-
----
-
 👨‍💻 Autoria
 
 ALVES, M. W.
 Concepção, estrutura metodológica, design e desenvolvimento do aplicativo.
-
----
-
-👥 Colaboração
-
-- Produção coletiva discente (identidade visual)
-- Turma do 6º período de Psicologia (execução)
-- Docentes orientadores:
-  - MARTINS, M. H. M.
-  - SOUZA, P. R. P.
 
 ---
 
