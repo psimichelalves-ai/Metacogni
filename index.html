@@ -989,8 +989,8 @@ function verificarValidade(){
   const hoje = new Date();
   const hojeStr = hoje.toISOString().split("T")[0]; // YYYY-MM-DD
 
-  // 🔒 DATA LIMITE (24/04/2026)  
-  const dataLimite = new Date("2026-05-31T21:59:59");
+  // 🔒 DATA LIMITE (30/06/2026)  
+  const dataLimite = new Date("2026-06-30T21:59:59");
 
   // ⛔ bloqueio por data fixa
   if(hoje > dataLimite){
